@@ -77,34 +77,65 @@ flutter run -d chrome --dart-define=SUPABASE_URL=https://qkrwrbeostnosimuqiii.su
 Admin деректері тек сол функцияның ортасында (`FCM_SERVICE_ACCOUNT`
 secret), қосымшада ешқашан сақталмайды.
 
-### Firebase жобасын ашу — нақты мәндер
+### Күй — не дайын, не қалды
 
-Firebase Console → Add app баспас бұрын `com.company.appname` орнына
-**осы жобаның нақты ID-лерін** жаз:
+**Дайын (жасалды):**
+- Android (`com.example.uno_family`) және iOS (`com.example.unoFamily`)
+  Firebase-те тіркелген; `google-services.json` /
+  `GoogleService-Info.plist` репозиторийге қойылып, Gradle-ге
+  `com.google.gms.google-services` plugin қосылды. Android/iOS-та
+  push endi қолмен define берудің қажеті жоқ — құрылғанда автоматты
+  жұмыс істейді (`Firebase.initializeApp()` нативті файлды өзі оқиды).
+- `FCM_SERVICE_ACCOUNT` secret Supabase-ке қойылды (сен жасадың).
+- `send-push` Edge Function MCP арқылы деплой болды (Supabase Dashboard →
+  Edge Functions → `send-push` → **ACTIVE**).
+- SQL миграциялары (`0001`, `0002`) MCP арқылы қойылды — барлық 6 кесте
+  RLS-пен дайын.
 
-| Платформа | Өріс | Мән |
-|---|---|---|
-| Android | Package name | `com.example.uno_family` |
-| iOS | Bundle ID | `com.example.unoFamily` |
-| Web | (жеке "Web app" ретінде тіркеу керек — push үшін ол да қажет) | — |
+**Сенің қолыңнан керек 3 нәрсе:**
 
-- "App nickname" — кез келген атау (мыс. "UNO Family Android"), міндетті емес.
-- "App Store ID" — әзірге бос қалдыр (App Store-ге шыққанда толтырасың).
-- `google-services.json` / `GoogleService-Info.plist` жүктеудің **қажеті
-  жоқ** — қосымша Firebase-ті `--dart-define` арқылы қолмен инициализациялайды
-  (`FcmPushService.init()`), нативті конфиг файлдары репозиторийге түспейді.
-- Әр 3 платформаны тіркегеннен кейін Project settings → General бетінен
-  **Web app**-тың конфигін аш: сол жерден `apiKey`, `appId`,
-  `messagingSenderId`, `projectId` мәндерін ал (үшеуі де платформалар
-  арасында ортақ, бір Firebase жобасы жеткілікті).
-- Push жіберу үшін: Project settings → Service accounts → **Generate new
-  private key** (JSON). Осы JSON-ды Supabase-ке сала: `supabase secrets set
-  FCM_SERVICE_ACCOUNT='<json мазмұны>'`, содан кейін `supabase functions
-  deploy send-push`. Толығырақ — `supabase/functions/send-push/index.ts`
-  файлының басындағы түсініктемеде.
+1. **Database Webhook (1 рет, 30 секунд).** `invites` кестесіне жазба
+   түскенде `send-push`-ті шақыратын webhook-ті SQL арқылы автоматты
+   қоя алмадым — Supabase бұл механизмді (`supabase_functions` схемасы)
+   тек Dashboard арқылы бір рет қосқанда өзі дайындайды, ал ол сервис-рөл
+   кілтін қауіпсіз өзі қол қояды (мен ол кілтті сұрамаймын — құпия
+   болғандықтан). Dashboard → **Database → Webhooks → Create a new hook**:
+   - Name: `invite_push`
+   - Table: `invites` · Event: `INSERT`
+   - Type: **Supabase Edge Function** → `send-push` таңда
+   - Save.
 
-Кілттерді алғаннан кейін `run_online.ps1` / `build_web_online.ps1`
-ішіндегі commented Firebase жолдарын ашып, мәндерді қой.
+2. **Anonymous auth қосу** (жоғарыда айтылды) — Dashboard → Authentication
+   → Sign In / Providers → Anonymous.
+
+3. **Web app тіркеу** (тек web push керек болса). Firebase Console →
+   осы жобада (`uno0-779e5`) → ⚙️ Project settings → General → "Add app"
+   → Web (`</>`). Одан кейін `apiKey`, `appId`, `messagingSenderId`
+   (=`986924424996`, ортақ), `projectId` (=`uno0-779e5`) мәндерін ал және
+   Cloud Messaging бетінен **Web Push certificates** → Generate key pair
+   → VAPID кілтін ал. Осыларды `run_online.ps1` /
+   `build_web_online.ps1` ішіндегі commented `FIREBASE_*` жолдарына қой.
+
+### iOS push — APNs кілті қосу
+
+FCM iOS-та жұмыс істеу үшін Apple-дың өз push кілті керек (Firebase
+жеке өзі жібере алмайды, APNs арқылы өтеді):
+
+1. [developer.apple.com](https://developer.apple.com) → Account →
+   Certificates, Identifiers & Profiles → **Keys** → **+** →
+   "Apple Push Notifications service (APNs)" тексер → Continue → Register.
+2. `.p8` файлын жүкте — **бір рет ғана жүктеуге болады**, сақтап қой.
+   Сол беттен **Key ID**-ды жаз; **Team ID** — аккаунт атыңның астында
+   (Membership бетінде).
+3. Firebase Console → осы жоба → ⚙️ Project settings → **Cloud Messaging**
+   табы → "Apple app configuration" (iOS app-тың астында) → **APNs
+   Authentication Key** → Upload → `.p8` файлды, Key ID мен Team ID-ды
+   енгіз → Upload.
+4. Identifiers → `com.example.unoFamily` App ID-де **Push Notifications**
+   capability қосулы тұруы керек (әдетте автоматты қосылады).
+5. Xcode-та (тек macOS-та құрғанда): Runner target → Signing & Capabilities
+   → **+ Capability** → "Push Notifications" және "Background Modes →
+   Remote notifications" қос.
 
 Хабарламалар тек жұмсақ: «Досың шақырды», «Күнделікті сыйлық дайын», «Жаңа маусым».
 

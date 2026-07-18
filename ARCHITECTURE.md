@@ -9,7 +9,7 @@ Child-safe (4+/Everyone) multiplayer card game. Flutter, one codebase: Android +
 | **Local** | No Supabase keys passed | Guest profile, game vs bots (all 4 modes), shop, missions, rank — everything offline |
 | **Online** | `--dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...` | + real auth (Google/Apple/Email), friends by code, public matchmaking, private rooms, realtime multiplayer |
 
-Push (FCM) activates only when Firebase is configured via dart-defines (see README). Never blocks the app.
+Push (FCM) is native-config-driven on Android/iOS (`google-services.json` / `GoogleService-Info.plist`, committed — no dart-define needed) and dart-define-driven on web (no native config mechanism there). Never blocks the app. Tokens are uploaded to Supabase `device_tokens`; sending happens server-side via the `send-push` Edge Function (Firebase Admin credentials never touch the client).
 
 ## Route map (go_router, real URL paths)
 
