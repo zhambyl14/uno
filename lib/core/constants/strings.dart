@@ -141,6 +141,17 @@ abstract final class S {
     ru: 'Пароль минимум 6 символов',
     en: 'Password must be at least 6 characters',
   );
+  static String get confirmEmailSent => _v(
+    kk:
+        'Email-ыңа растау хат жіберілді. Хаттағы сілтемені бас, содан кейін '
+        'осы email/құпиясөзбен кір.',
+    ru:
+        'На твой email отправлено письмо с подтверждением. Перейди по '
+        'ссылке в письме, затем войди с этим email и паролем.',
+    en:
+        'A confirmation email was sent. Click the link in it, then sign '
+        'in with this email and password.',
+  );
   static String get createProfileTitle =>
       _v(kk: 'Профиль құру', ru: 'Создание профиля', en: 'Create profile');
   static String get nicknameLabel =>

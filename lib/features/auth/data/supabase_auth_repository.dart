@@ -64,6 +64,14 @@ class SupabaseAuthRepository implements AuthRepository {
     final user = response.user;
     if (user == null) throw AuthFailure(S.unknownError);
     if (register) {
+      if (response.session == null) {
+        // "Confirm email" is on in Supabase (Authentication → Providers →
+        // Email) — there's no session yet, so writing the profile row now
+        // would be rejected by RLS (auth.uid() is null without a session).
+        // The profile is created lazily on the first real sign-in, once
+        // the user clicks the confirmation link — see _loadOrCreateProfile.
+        throw AuthFailure(S.confirmEmailSent);
+      }
       return _createProfile(
         user,
         nickname: nickname ?? _defaultNickname(),

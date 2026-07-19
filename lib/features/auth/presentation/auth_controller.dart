@@ -27,18 +27,31 @@ class AuthController extends AsyncNotifier<PlayerProfile?> {
     _subscription = repo.authEvents.listen((_) => ref.invalidateSelf());
     ref.onDispose(() => _subscription?.cancel());
     final profile = await repo.restore() ?? await _autoGuest(repo);
-    unawaited(ref.read(pushServiceProvider).syncToken(profile.id));
+    if (profile != null) {
+      unawaited(ref.read(pushServiceProvider).syncToken(profile.id));
+    }
     return profile;
   }
 
-  Future<PlayerProfile> _autoGuest(AuthRepository repo) {
-    final rng = Random();
-    final avatar = Avatars.free[rng.nextInt(Avatars.free.length)];
-    return repo.signInGuest(
-      nickname: 'player${1000 + rng.nextInt(9000)}',
-      avatarId: avatar.id,
-      isChild: false,
-    );
+  /// Best-effort: if the backend rejects anonymous sign-in (e.g. Anonymous
+  /// auth isn't enabled in the Supabase dashboard yet), fall back to `null`
+  /// rather than throwing — throwing here would leave [build] in
+  /// [AsyncError] forever, which the router treats the same as "still
+  /// loading" and the app would be stuck on the splash screen with no way
+  /// forward. `null` lets Home render (profile-less) and Login stays
+  /// reachable to retry a real sign-in.
+  Future<PlayerProfile?> _autoGuest(AuthRepository repo) async {
+    try {
+      final rng = Random();
+      final avatar = Avatars.free[rng.nextInt(Avatars.free.length)];
+      return await repo.signInGuest(
+        nickname: 'player${1000 + rng.nextInt(9000)}',
+        avatarId: avatar.id,
+        isChild: false,
+      );
+    } on AppFailure {
+      return null;
+    }
   }
 
   PlayerProfile? get profile => state.value;
