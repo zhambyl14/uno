@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/catalog.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/services/push_service.dart';
 import '../../../core/utils/failures.dart';
@@ -10,6 +12,11 @@ import '../data/auth_repository.dart';
 import '../domain/player_profile.dart';
 
 /// Session state for the whole app. Kept alive while the app runs.
+///
+/// The app never blocks on a login screen: a nameless visitor becomes a
+/// guest automatically on first launch (see [_autoGuest]) and can start
+/// playing Classic mode immediately. Signing in for real (Google/Apple/
+/// Email) is an upgrade a guest opts into later to unlock the rest.
 class AuthController extends AsyncNotifier<PlayerProfile?> {
   StreamSubscription<void>? _subscription;
 
@@ -19,9 +26,19 @@ class AuthController extends AsyncNotifier<PlayerProfile?> {
     await _subscription?.cancel();
     _subscription = repo.authEvents.listen((_) => ref.invalidateSelf());
     ref.onDispose(() => _subscription?.cancel());
-    final profile = await repo.restore();
-    unawaited(ref.read(pushServiceProvider).syncToken(profile?.id));
+    final profile = await repo.restore() ?? await _autoGuest(repo);
+    unawaited(ref.read(pushServiceProvider).syncToken(profile.id));
     return profile;
+  }
+
+  Future<PlayerProfile> _autoGuest(AuthRepository repo) {
+    final rng = Random();
+    final avatar = Avatars.free[rng.nextInt(Avatars.free.length)];
+    return repo.signInGuest(
+      nickname: 'player${1000 + rng.nextInt(9000)}',
+      avatarId: avatar.id,
+      isChild: false,
+    );
   }
 
   PlayerProfile? get profile => state.value;

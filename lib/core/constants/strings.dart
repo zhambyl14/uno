@@ -79,9 +79,29 @@ abstract final class S {
   static String get loginTitle =>
       _v(kk: 'Қош келдің!', ru: 'Добро пожаловать!', en: 'Welcome!');
   static String get loginSubtitle => _v(
-    kk: 'Балалар мен ересектерге арналған қауіпсіз карта ойыны',
-    ru: 'Безопасная карточная игра для детей и взрослых',
-    en: 'A safe card game for kids and adults',
+    kk: 'Барлық режимдерді ашып, әлем бойынша жарыс',
+    ru: 'Открой все режимы и соревнуйся по всему миру',
+    en: 'Unlock every mode and compete worldwide',
+  );
+  static String get unlockPerkModes => _v(
+    kk: 'Family, Fast және Team 2v2 режимдері',
+    ru: 'Режимы Family, Fast и Team 2v2',
+    en: 'Family, Fast and Team 2v2 modes',
+  );
+  static String get unlockPerkFriends => _v(
+    kk: 'Достармен ойнау және шақыру',
+    ru: 'Игра и приглашения с друзьями',
+    en: 'Play and invite friends',
+  );
+  static String get unlockPerkLeaderboard => _v(
+    kk: 'Әлемдік рейтингте орын алу',
+    ru: 'Место в мировом рейтинге',
+    en: 'A spot on the world leaderboard',
+  );
+  static String get unlockPerkSync => _v(
+    kk: 'Прогресс кез келген құрылғыда сақталады',
+    ru: 'Прогресс сохраняется на любом устройстве',
+    en: 'Progress synced across every device',
   );
   static String get signInGoogle => _v(
     kk: 'Google арқылы кіру',
@@ -97,11 +117,6 @@ abstract final class S {
     kk: 'Email арқылы кіру',
     ru: 'Войти через Email',
     en: 'Sign in with Email',
-  );
-  static String get playAsGuest => _v(
-    kk: 'Қонақ ретінде ойнау',
-    ru: 'Играть как гость',
-    en: 'Play as guest',
   );
   static const emailLabel = 'Email';
   static String get passwordLabel =>
@@ -219,6 +234,38 @@ abstract final class S {
     ru: 'Семейный режим: две команды',
     en: 'A family mode with two teams',
   );
+  static String get lockedBadge =>
+      _v(kk: 'Құлыпты', ru: 'Закрыто', en: 'Locked');
+  static String get guestGateTitle => _v(
+    kk: 'Бұл режим тіркелгенге ашылады',
+    ru: 'Этот режим открывается после входа',
+    en: 'Sign in to unlock this mode',
+  );
+  static String get guestGateBody => _v(
+    kk:
+        'Қонақ ретінде тек Classic ойнай аласың. Тіркеліп, Family, Fast, '
+        'Team 2v2 режимдерін және әлемдік рейтингті аш.',
+    ru:
+        'В гостевом режиме доступен только Classic. Войди, чтобы открыть '
+        'Family, Fast, Team 2v2 и мировой рейтинг.',
+    en:
+        'Guests can only play Classic. Sign in to unlock Family, Fast, '
+        'Team 2v2 and the world leaderboard.',
+  );
+  static String get signInNow =>
+      _v(kk: 'Қазір кіру', ru: 'Войти сейчас', en: 'Sign in now');
+  static String get maybeLater =>
+      _v(kk: 'Кейінірек', ru: 'Позже', en: 'Maybe later');
+  static String get guestProfileBannerTitle => _v(
+    kk: 'Сен қонақ режиміндесің',
+    ru: 'Ты в гостевом режиме',
+    en: "You're playing as a guest",
+  );
+  static String get guestProfileBannerBody => _v(
+    kk: 'Тіркеліп, барлық режимдер мен әлемдік рейтингті аш',
+    ru: 'Войди, чтобы открыть все режимы и мировой рейтинг',
+    en: 'Sign in to unlock every mode and the world leaderboard',
+  );
 
   // Missions
   static String get missionsTitle => _v(
@@ -250,6 +297,14 @@ abstract final class S {
       _v(kk: '$month маусымы', ru: 'Сезон: $month', en: '$month season');
   static String rankPointsLabel(int points) =>
       _v(kk: '$points ұпай', ru: '$points очков', en: '$points points');
+  static String get leaderboardTitle =>
+      _v(kk: 'Әлемдік рейтинг', ru: 'Мировой рейтинг', en: 'World leaderboard');
+  static String get leaderboardEmpty => _v(
+    kk: 'Әзірге ешкім ойнаған жоқ',
+    ru: 'Пока никто не играл',
+    en: 'No one has played yet',
+  );
+  static String get leaderboardYou => _v(kk: 'Сен', ru: 'Ты', en: 'You');
   static List<String> get monthNames => _v(
     kk: const [
       'Қаңтар',
@@ -578,7 +633,8 @@ abstract final class S {
       _v(kk: 'Эмодзи топтамалары', ru: 'Наборы эмодзи', en: 'Emoji packs');
 
   // Shop item names (avatar packs / card skins / table themes)
-  static String get itemJungle => _v(kk: 'Джунгли', ru: 'Джунгли', en: 'Jungle');
+  static String get itemJungle =>
+      _v(kk: 'Джунгли', ru: 'Джунгли', en: 'Jungle');
   static String get itemSea => _v(kk: 'Теңіз', ru: 'Море', en: 'Sea');
   static String get itemSweets =>
       _v(kk: 'Тәттілер', ru: 'Сладости', en: 'Sweets');

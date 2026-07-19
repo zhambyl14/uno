@@ -7,7 +7,7 @@ import 'package:uno_family/core/services/prefs_service.dart';
 import 'package:uno_family/core/services/push_service.dart';
 
 void main() {
-  testWidgets('boots and lands on the login gate when signed out', (
+  testWidgets('boots straight into a guest home session (no login gate)', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -23,12 +23,12 @@ void main() {
       ),
     );
 
-    // Splash → auth resolves (no profile) → login.
+    // Splash → an anonymous guest profile is auto-created → Home.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pumpAndSettle();
 
-    expect(find.text(S.loginTitle), findsOneWidget);
-    expect(find.text(S.playAsGuest), findsOneWidget);
+    expect(find.text(S.chooseMode), findsOneWidget);
+    expect(find.text(S.playNow), findsOneWidget);
   });
 }

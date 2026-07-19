@@ -81,6 +81,10 @@ class ProfileScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(Insets.l),
                 children: [
                   _Header(profile: profile),
+                  if (profile.isGuest) ...[
+                    const SizedBox(height: Insets.l),
+                    const _GuestUpgradeBanner(),
+                  ],
                   const SizedBox(height: Insets.l),
                   RankBadge(points: profile.rankPoints),
                   const SizedBox(height: Insets.l),
@@ -180,6 +184,57 @@ class _Header extends StatelessWidget {
         const SizedBox(width: Insets.s),
         CoinChip(coins: profile.coins),
       ],
+    );
+  }
+}
+
+class _GuestUpgradeBanner extends StatelessWidget {
+  const _GuestUpgradeBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(Insets.m),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(Corners.l),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.workspace_premium_rounded,
+            color: scheme.onPrimaryContainer,
+          ),
+          const SizedBox(width: Insets.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  S.guestProfileBannerTitle,
+                  style: theme.textTheme.titleSmall!.copyWith(
+                    color: scheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  S.guestProfileBannerBody,
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: scheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Insets.s),
+          FilledButton(
+            onPressed: () => context.push(Routes.login),
+            child: Text(S.signInNow),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -9,6 +9,7 @@ import '../features/friends/presentation/friends_screen.dart';
 import '../features/game/presentation/game_controller.dart';
 import '../features/game/presentation/game_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/leaderboard/presentation/leaderboard_screen.dart';
 import '../features/lobby/presentation/lobby_screen.dart';
 import '../features/lobby/presentation/room_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
@@ -34,14 +35,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
-      // Wait on splash while the session is resolving.
+      // Wait on splash while a guest session is being created/restored —
+      // there is no login gate, the app always ends up with a profile.
       if (authState.isLoading || !authState.hasValue) {
         return loc == Routes.splash ? null : Routes.splash;
       }
-      final loggedIn = authState.value != null;
-      final atGate = loc == Routes.splash || loc == Routes.login;
-      if (!loggedIn) return atGate ? Routes.login : Routes.login;
-      if (atGate) return Routes.home;
+      if (loc == Routes.splash) return Routes.home;
       return null;
     },
     routes: [
@@ -113,6 +112,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.privacy,
         parentNavigatorKey: _rootKey,
         builder: (_, _) => const PrivacyScreen(),
+      ),
+      GoRoute(
+        path: Routes.leaderboard,
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const LeaderboardScreen(),
       ),
     ],
   );

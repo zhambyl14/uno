@@ -28,19 +28,10 @@ Future<void> _boot(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('guest sign-in reaches home and tabs navigate', (tester) async {
+  testWidgets('guest lands on home directly and tabs navigate', (tester) async {
     await _boot(tester);
 
-    // Open the guest profile sheet.
-    await tester.tap(find.text(S.playAsGuest));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextFormField), 'Aibek');
-    await tester.tap(find.text(S.startPlaying));
-    await tester.pumpAndSettle();
-
-    // Home greeting proves auth + redirect worked.
-    expect(find.text(S.greeting('Aibek')), findsOneWidget);
+    // No login gate: home is already showing with the mode picker.
     expect(find.text(S.chooseMode), findsOneWidget);
 
     // Navigate the shell tabs.
@@ -55,5 +46,23 @@ void main() {
     await tester.tap(find.text(S.navProfile).last);
     await tester.pumpAndSettle();
     expect(find.text(S.statsTitle), findsOneWidget);
+    // Guests see an upgrade banner prompting them to sign in.
+    expect(find.text(S.guestProfileBannerTitle), findsOneWidget);
+  });
+
+  testWidgets('guest tapping a locked mode sees a sign-in gate', (
+    tester,
+  ) async {
+    await _boot(tester);
+
+    await tester.tap(find.text('Family'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(S.guestGateTitle), findsOneWidget);
+
+    await tester.tap(find.text(S.signInNow));
+    await tester.pumpAndSettle();
+
+    expect(find.text(S.loginTitle), findsOneWidget);
   });
 }

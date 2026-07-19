@@ -5,6 +5,8 @@ import '../../../../core/constants/insets.dart';
 import '../../domain/uno_card.dart';
 
 /// Draws a single UNO card with pure widgets (no image assets → tiny size).
+/// Styled after the physical card: a colored face, a tilted white badge
+/// behind the big central symbol, and small corner indices.
 class UnoCardView extends StatelessWidget {
   const UnoCardView({
     super.key,
@@ -52,38 +54,52 @@ class UnoCardView extends StatelessWidget {
     }
 
     final base = colorOf(card.color);
+    final dark = Color.lerp(base, Colors.black, 0.28)!;
     final symbol = symbolOf(card);
     // Number, +2 and +4 render as tinted text; the rest are emoji glyphs.
     const textTypes = {CardType.number, CardType.drawTwo, CardType.wildFour};
     final isText = textTypes.contains(card.type);
+    final cornerColor = Colors.white.withValues(alpha: 0.92);
 
-    return Opacity(
-      opacity: playable ? 1 : 0.5,
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 150),
+      opacity: playable ? 1 : 0.45,
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: base,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [base, dark],
+          ),
           borderRadius: BorderRadius.circular(Corners.card),
           border: Border.all(color: Colors.white, width: 3),
           boxShadow: const [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(0, 2),
+              color: Colors.black38,
+              blurRadius: 5,
+              offset: Offset(0, 3),
             ),
           ],
         ),
-        child: Center(
-          child: Container(
-            width: width * 0.68,
-            height: height * 0.68,
-            decoration: BoxDecoration(
-              color: GamePalette.cardFace,
-              borderRadius: BorderRadius.circular(Corners.s),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Tilted white badge behind the central symbol.
+            Transform.rotate(
+              angle: -0.35,
+              child: Container(
+                width: width * 0.62,
+                height: height * 0.92,
+                decoration: BoxDecoration(
+                  color: GamePalette.cardFace,
+                  borderRadius: BorderRadius.circular(width * 0.4),
+                ),
+              ),
             ),
-            alignment: Alignment.center,
-            child: FittedBox(
+            FittedBox(
               fit: BoxFit.scaleDown,
               child: Padding(
                 padding: const EdgeInsets.all(Insets.xs),
@@ -97,7 +113,34 @@ class UnoCardView extends StatelessWidget {
                 ),
               ),
             ),
-          ),
+            Positioned(
+              top: 4,
+              left: 6,
+              child: Text(
+                symbol,
+                style: TextStyle(
+                  fontSize: width * 0.15,
+                  fontWeight: FontWeight.w900,
+                  color: cornerColor,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 4,
+              right: 6,
+              child: Transform.rotate(
+                angle: 3.14159,
+                child: Text(
+                  symbol,
+                  style: TextStyle(
+                    fontSize: width * 0.15,
+                    fontWeight: FontWeight.w900,
+                    color: cornerColor,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -116,22 +159,33 @@ class _CardBack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Color.lerp(color, Colors.black, 0.3)!;
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: color,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color, dark],
+        ),
         borderRadius: BorderRadius.circular(Corners.card),
         border: Border.all(color: Colors.white, width: 3),
+        boxShadow: const [
+          BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 2)),
+        ],
       ),
       alignment: Alignment.center,
-      child: Text(
-        'UNO',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontSize: width * 0.24,
-          letterSpacing: 1,
+      child: Transform.rotate(
+        angle: -0.35,
+        child: Text(
+          'UNO',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            fontSize: width * 0.26,
+            letterSpacing: 1,
+          ),
         ),
       ),
     );

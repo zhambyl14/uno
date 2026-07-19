@@ -13,6 +13,7 @@ abstract final class Routes {
   static const results = '/results';
   static const settings = '/settings';
   static const privacy = '/settings/privacy';
+  static const leaderboard = '/leaderboard';
 
   static String roomPath(String code) => '/room/$code';
 }

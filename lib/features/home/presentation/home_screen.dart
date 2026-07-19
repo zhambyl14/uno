@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../core/constants/app_config.dart';
+import '../../../core/constants/game_palette.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
@@ -33,9 +36,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _playWithFriends() =>
       context.push('${Routes.lobby}?mode=${_mode.index}');
 
+  Future<void> _tapMode(GameMode mode, bool locked) async {
+    if (!locked) {
+      setState(() => _mode = mode);
+      return;
+    }
+    final signIn = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => const _GuestGateSheet(),
+    );
+    if (signIn == true && mounted) unawaited(context.push(Routes.login));
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(authControllerProvider).value;
+    final isGuest = profile?.isGuest ?? true;
     return Scaffold(
       appBar: AppBar(
         title: const Text(S.appName),
@@ -45,6 +62,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: EdgeInsets.only(right: Insets.s),
               child: Center(child: _LocalBadge()),
             ),
+          IconButton(
+            tooltip: S.leaderboardTitle,
+            onPressed: () => context.push(Routes.leaderboard),
+            icon: const Icon(Icons.emoji_events_outlined),
+          ),
           if (profile != null)
             Padding(
               padding: const EdgeInsets.only(right: Insets.m),
@@ -59,42 +81,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             if (profile != null)
               Text(
                 S.greeting(profile.nickname),
-                style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.w600),
               ),
+            const SizedBox(height: Insets.m),
+            _PlayHero(
+              mode: _mode,
+              onPlay: _playVsBots,
+              onPlayWithFriends: _playWithFriends,
+            ),
             const SizedBox(height: Insets.l),
             Text(S.chooseMode, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: Insets.s),
             _ModeGrid(
               selected: _mode,
-              onSelect: (m) => setState(() => _mode = m),
-            ),
-            const SizedBox(height: Insets.l),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _playVsBots,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 56),
-                    ),
-                    icon: const Icon(Icons.smart_toy_outlined),
-                    label: Text(S.playVsBots),
-                  ),
-                ),
-                const SizedBox(width: Insets.s),
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: _playWithFriends,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 56),
-                    ),
-                    icon: const Icon(Icons.people_alt_outlined),
-                    label: Text(S.playWithFriends),
-                  ),
-                ),
-              ],
+              guestLocked: isGuest,
+              onSelect: _tapMode,
             ),
             const SizedBox(height: Insets.l),
             if (profile != null)
@@ -113,10 +116,94 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+/// The single primary call-to-action: big, colorful, impossible to miss.
+class _PlayHero extends StatelessWidget {
+  const _PlayHero({
+    required this.mode,
+    required this.onPlay,
+    required this.onPlayWithFriends,
+  });
+  final GameMode mode;
+  final VoidCallback onPlay;
+  final VoidCallback onPlayWithFriends;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(Insets.l),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [GamePalette.blue, GamePalette.wild],
+        ),
+        borderRadius: BorderRadius.circular(Corners.l),
+        boxShadow: [
+          BoxShadow(
+            color: GamePalette.blue.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text(mode.emoji, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: Insets.s),
+              Expanded(
+                child: Text(
+                  mode.label,
+                  style: theme.textTheme.titleLarge!.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Insets.m),
+          SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: onPlay,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: GamePalette.wild,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: Text(S.playNow),
+            ),
+          ),
+          const SizedBox(height: Insets.xs),
+          TextButton.icon(
+            onPressed: onPlayWithFriends,
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            icon: const Icon(Icons.people_alt_outlined, size: 18),
+            label: Text(S.playWithFriends),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ModeGrid extends StatelessWidget {
-  const _ModeGrid({required this.selected, required this.onSelect});
+  const _ModeGrid({
+    required this.selected,
+    required this.guestLocked,
+    required this.onSelect,
+  });
   final GameMode selected;
-  final ValueChanged<GameMode> onSelect;
+  final bool guestLocked;
+  final void Function(GameMode mode, bool locked) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -125,19 +212,67 @@ class _ModeGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 320,
-        mainAxisExtent: 116,
+        mainAxisExtent: 108,
         crossAxisSpacing: Insets.s,
         mainAxisSpacing: Insets.s,
       ),
       itemCount: GameMode.values.length,
       itemBuilder: (context, index) {
         final mode = GameMode.values[index];
+        final locked = guestLocked && mode != GameMode.classic;
         return ModeCard(
           mode: mode,
           selected: mode == selected,
-          onTap: () => onSelect(mode),
+          locked: locked,
+          onTap: () => onSelect(mode, locked),
         );
       },
+    );
+  }
+}
+
+class _GuestGateSheet extends StatelessWidget {
+  const _GuestGateSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Insets.l, 0, Insets.l, Insets.l),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🔒', style: TextStyle(fontSize: 40)),
+          const SizedBox(height: Insets.s),
+          Text(
+            S.guestGateTitle,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium!.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: Insets.xs),
+          Text(
+            S.guestGateBody,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: Insets.l),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(S.signInNow),
+            ),
+          ),
+          const SizedBox(height: Insets.xs),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(S.maybeLater),
+          ),
+        ],
+      ),
     );
   }
 }

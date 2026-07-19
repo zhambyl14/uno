@@ -9,22 +9,12 @@ import '../../../core/widgets/adaptive_scaffold.dart';
 import '../data/auth_repository.dart';
 import 'auth_controller.dart';
 import 'widgets/email_auth_sheet.dart';
-import 'widgets/profile_setup_form.dart';
 
+/// Reached only as an opt-in upgrade (from a locked mode or the Profile
+/// tab) — never a blocking gate. A guest profile already exists by the
+/// time this screen can be shown; signing in here unlocks the rest.
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
-
-  Future<void> _sheet(BuildContext context, Widget child) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Insets.l),
-        child: child,
-      ),
-    );
-  }
 
   Future<void> _oauth(
     BuildContext context,
@@ -42,29 +32,18 @@ class LoginScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _email(BuildContext context) {
-    if (!AppConfig.isOnline) return _showOnlineOnly(context);
-    return _sheet(context, const EmailAuthSheet());
-  }
-
-  Future<void> _guest(BuildContext context, WidgetRef ref) {
-    return _sheet(
-      context,
-      _GuestSetup(
-        onSubmit: (nickname, avatarId, isChild) async {
-          try {
-            await ref
-                .read(authControllerProvider.notifier)
-                .signInGuest(
-                  nickname: nickname,
-                  avatarId: avatarId,
-                  isChild: isChild,
-                );
-            if (context.mounted) Navigator.of(context).pop();
-          } catch (error) {
-            if (context.mounted) context.showError(error);
-          }
-        },
+  Future<void> _email(BuildContext context) async {
+    if (!AppConfig.isOnline) {
+      await _showOnlineOnly(context);
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: Insets.l),
+        child: EmailAuthSheet(),
       ),
     );
   }
@@ -89,23 +68,28 @@ class LoginScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Scaffold(
+      appBar: AppBar(),
       body: SafeArea(
         child: ContentWidth(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(Insets.l),
+            padding: const EdgeInsets.fromLTRB(Insets.l, 0, Insets.l, Insets.l),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: Insets.xl),
-                const Text('🃏', style: TextStyle(fontSize: 64)),
+                const Text(
+                  '🌍',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 56),
+                ),
                 const SizedBox(height: Insets.m),
                 Text(
                   S.loginTitle,
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall!.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: Insets.s),
+                const SizedBox(height: Insets.xs),
                 Text(
                   S.loginSubtitle,
                   textAlign: TextAlign.center,
@@ -113,10 +97,13 @@ class LoginScreen extends ConsumerWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                const SizedBox(height: Insets.l),
+                const _PerkList(),
                 const SizedBox(height: Insets.xl),
                 _SignInButton(
                   icon: Icons.g_mobiledata_rounded,
                   label: S.signInGoogle,
+                  filled: true,
                   onPressed: () => _oauth(context, ref, OAuthKind.google),
                 ),
                 _SignInButton(
@@ -129,17 +116,8 @@ class LoginScreen extends ConsumerWidget {
                   label: S.signInEmail,
                   onPressed: () => _email(context),
                 ),
-                const SizedBox(height: Insets.s),
-                const _OrDivider(),
-                const SizedBox(height: Insets.s),
-                _SignInButton(
-                  icon: Icons.sports_esports_outlined,
-                  label: S.playAsGuest,
-                  filled: true,
-                  onPressed: () => _guest(context, ref),
-                ),
                 if (!AppConfig.isOnline) ...[
-                  const SizedBox(height: Insets.l),
+                  const SizedBox(height: Insets.m),
                   const _LocalModeNote(),
                 ],
               ],
@@ -151,18 +129,44 @@ class LoginScreen extends ConsumerWidget {
   }
 }
 
-/// Wraps the shared profile setup form for guest sign-in inside a sheet.
-class _GuestSetup extends StatelessWidget {
-  const _GuestSetup({required this.onSubmit});
-  final void Function(String, String, bool) onSubmit;
+class _PerkList extends StatelessWidget {
+  const _PerkList();
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom + Insets.l,
+    final scheme = Theme.of(context).colorScheme;
+    final perks = [
+      (Icons.style_rounded, S.unlockPerkModes),
+      (Icons.groups_rounded, S.unlockPerkFriends),
+      (Icons.emoji_events_rounded, S.unlockPerkLeaderboard),
+      (Icons.sync_rounded, S.unlockPerkSync),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(Insets.m),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(Corners.l),
       ),
-      child: ProfileSetupForm(submitLabel: S.startPlaying, onSubmit: onSubmit),
+      child: Column(
+        children: [
+          for (final (icon, label) in perks)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: Insets.xs),
+              child: Row(
+                children: [
+                  Icon(icon, color: scheme.onSecondaryContainer, size: 20),
+                  const SizedBox(width: Insets.s),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(color: scheme.onSecondaryContainer),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -198,24 +202,6 @@ class _SignInButton extends StatelessWidget {
             ? FilledButton(onPressed: onPressed, child: child)
             : OutlinedButton(onPressed: onPressed, child: child),
       ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(child: Divider()),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: Insets.m),
-          child: Text('•'),
-        ),
-        Expanded(child: Divider()),
-      ],
     );
   }
 }

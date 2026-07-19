@@ -337,7 +337,18 @@ class _CenterArea extends StatelessWidget {
                 onTap: onDraw,
               ),
               const SizedBox(width: Insets.xl),
-              UnoCardView(card: state.topCard, width: 84),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+                child: UnoCardView(
+                  key: ValueKey(state.topCard.id),
+                  card: state.topCard,
+                  width: 84,
+                ),
+              ),
             ],
           ),
         ),
@@ -400,7 +411,7 @@ class _DrawPile extends StatelessWidget {
   }
 }
 
-class _ActionBar extends StatelessWidget {
+class _ActionBar extends StatefulWidget {
   const _ActionBar({
     required this.myTurn,
     required this.canUno,
@@ -411,7 +422,42 @@ class _ActionBar extends StatelessWidget {
   final VoidCallback onUno;
 
   @override
+  State<_ActionBar> createState() => _ActionBarState();
+}
+
+class _ActionBarState extends State<_ActionBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 550),
+  )..addListener(() => setState(() {}));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.canUno) _pulse.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_ActionBar old) {
+    super.didUpdateWidget(old);
+    if (widget.canUno && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (!widget.canUno && _pulse.isAnimating) {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final scale = widget.canUno ? 1 + _pulse.value * 0.08 : 1.0;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: Insets.m,
@@ -420,15 +466,18 @@ class _ActionBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FilledButton.icon(
-            onPressed: canUno ? onUno : null,
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(120, 48),
+          Transform.scale(
+            scale: scale,
+            child: FilledButton.icon(
+              onPressed: widget.canUno ? widget.onUno : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(120, 48),
+              ),
+              icon: const Icon(Icons.pan_tool_alt_rounded),
+              label: const Text(S.unoButton),
             ),
-            icon: const Icon(Icons.pan_tool_alt_rounded),
-            label: const Text(S.unoButton),
           ),
         ],
       ),
