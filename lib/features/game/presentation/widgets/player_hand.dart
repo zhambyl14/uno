@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/insets.dart';
 import '../../domain/game_state.dart';
 import '../../domain/uno_card.dart';
+import '../../domain/uno_rules.dart';
 import 'uno_card_view.dart';
 
 /// The local player's hand as a horizontal, mouse-draggable card strip.
@@ -13,11 +14,13 @@ class PlayerHand extends StatelessWidget {
   const PlayerHand({
     super.key,
     required this.state,
+    required this.playerId,
     required this.myTurn,
     required this.onPlay,
   });
 
   final GameState state;
+  final String playerId;
   final bool myTurn;
   final ValueChanged<UnoCard> onPlay;
 
@@ -26,10 +29,7 @@ class PlayerHand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final me = state.players.firstWhere(
-      (p) => !p.isBot,
-      orElse: () => state.players.first,
-    );
+    final me = state.playerById(playerId) ?? state.players.first;
     final cards = me.hand;
     final cardWidth = context.isCompactHeight ? 56.0 : 68.0;
     final center = (cards.length - 1) / 2;
@@ -50,30 +50,31 @@ class PlayerHand extends StatelessWidget {
           separatorBuilder: (_, _) => const SizedBox(width: Insets.xs),
           itemBuilder: (context, index) {
             final card = cards[index];
-            final playable =
-                myTurn &&
-                card.matches(
-                  activeColor: state.activeColor,
-                  top: state.topCard,
-                  rainbowFree: state.rainbowFree,
-                );
+            final playable = myTurn && UnoRules.canPlayCard(state, card);
             final offsetFromCenter = index - center;
             final angle = offsetFromCenter * _fanStep;
             final lift = offsetFromCenter.abs() * _liftPerStep;
-            return Transform.translate(
-              offset: Offset(0, lift - (playable ? 10 : 0)),
-              child: Transform.rotate(
-                angle: angle,
-                alignment: Alignment.bottomCenter,
-                child: GestureDetector(
-                  onTap: playable ? () => onPlay(card) : null,
-                  child: AnimatedScale(
-                    scale: playable ? 1.06 : 1,
-                    duration: const Duration(milliseconds: 150),
-                    child: UnoCardView(
-                      card: card,
-                      width: cardWidth,
-                      playable: playable,
+            return Semantics(
+              button: playable,
+              enabled: playable,
+              label:
+                  '${UnoCardView.symbolOf(card)} ${card.color.name}${playable ? ', playable' : ''}',
+              child: Transform.translate(
+                offset: Offset(0, lift - (playable ? 10 : 0)),
+                child: Transform.rotate(
+                  angle: angle,
+                  alignment: Alignment.bottomCenter,
+                  child: GestureDetector(
+                    onTap: playable ? () => onPlay(card) : null,
+                    child: AnimatedScale(
+                      scale: playable ? 1.06 : 1,
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeOutBack,
+                      child: UnoCardView(
+                        card: card,
+                        width: cardWidth,
+                        playable: playable,
+                      ),
                     ),
                   ),
                 ),

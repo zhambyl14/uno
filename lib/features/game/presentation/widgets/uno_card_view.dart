@@ -75,11 +75,14 @@ class UnoCardView extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(Corners.card),
           border: Border.all(color: Colors.white, width: 3),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Colors.black38,
-              blurRadius: 5,
-              offset: Offset(0, 3),
+              color: (playable ? base : Colors.black).withValues(
+                alpha: playable ? 0.48 : 0.28,
+              ),
+              blurRadius: playable ? 12 : 5,
+              spreadRadius: playable ? 0.8 : 0,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -96,6 +99,22 @@ class UnoCardView extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: GamePalette.cardFace,
                   borderRadius: BorderRadius.circular(width * 0.4),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.center,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.24),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -176,17 +195,30 @@ class _CardBack extends StatelessWidget {
         ],
       ),
       alignment: Alignment.center,
-      child: Transform.rotate(
-        angle: -0.35,
-        child: Text(
-          'UNO',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: width * 0.26,
-            letterSpacing: 1,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: width * 0.68,
+            height: height * 0.48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(width * 0.18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+            ),
           ),
-        ),
+          Transform.rotate(
+            angle: -0.35,
+            child: Text(
+              'UNO',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: width * 0.26,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

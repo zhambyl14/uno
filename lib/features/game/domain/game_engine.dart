@@ -5,6 +5,7 @@ import 'game_action.dart';
 import 'game_mode.dart';
 import 'game_state.dart';
 import 'uno_card.dart';
+import 'uno_rules.dart';
 
 /// Pure, deterministic rules engine. All mutations produce a new state;
 /// invalid actions return the input state unchanged.
@@ -59,9 +60,26 @@ abstract final class GameEngine {
       case PlayCardAction():
         return _play(s, action, rng, now);
       case DrawCardAction():
-        return _draw(s, action.playerId, GameEventType.drewCard, now);
+        return _draw(
+          s,
+          action.playerId,
+          GameEventType.drewCard,
+          now,
+          endTurn: false,
+        );
       case TimeoutAction():
-        return _draw(s, action.playerId, GameEventType.timeoutDraw, now);
+        if (s.drawnCardId != null) {
+          return _pass(s, action.playerId, now, GameEventType.timeoutDraw);
+        }
+        return _draw(
+          s,
+          action.playerId,
+          GameEventType.timeoutDraw,
+          now,
+          endTurn: true,
+        );
+      case PassAction():
+        return _pass(s, action.playerId, now, GameEventType.passed);
       case LeaveAction():
         return _leave(s, action.playerId);
     }
@@ -88,16 +106,11 @@ abstract final class GameEngine {
   ) {
     if (s.currentPlayer.id != action.playerId) return s;
     final player = s.currentPlayer;
+    if (s.drawnCardId != null && s.drawnCardId != action.cardId) return s;
     final cardIndex = player.hand.indexWhere((c) => c.id == action.cardId);
     if (cardIndex < 0) return s;
     final card = player.hand[cardIndex];
-    if (!card.matches(
-      activeColor: s.activeColor,
-      top: s.topCard,
-      rainbowFree: s.rainbowFree,
-    )) {
-      return s;
-    }
+    if (!UnoRules.canPlayCard(s, card)) return s;
     if (card.needsColorChoice && action.chosenColor == null) return s;
     if (action.chosenColor == CardColor.wild) return s;
 
@@ -129,6 +142,7 @@ abstract final class GameEngine {
         winnerId: player.id,
         rainbowFree: false,
         turnEndsAt: null,
+        drawnCardId: null,
         event: GameEvent(GameEventType.win, player.id),
       );
     }
@@ -217,6 +231,7 @@ abstract final class GameEngine {
       direction: direction,
       rainbowFree: rainbowFree,
       turnEndsAt: _deadline(s.mode, now),
+      drawnCardId: null,
       event: event,
     );
   }
@@ -225,9 +240,11 @@ abstract final class GameEngine {
     GameState s,
     String playerId,
     GameEventType eventType,
-    DateTime now,
-  ) {
+    DateTime now, {
+    required bool endTurn,
+  }) {
     if (s.currentPlayer.id != playerId) return s;
+    if (s.drawnCardId != null) return s;
     final drawPile = List.of(s.drawPile);
     final discardPile = List.of(s.discardPile);
     final drawn = _take(drawPile, discardPile, 1);
@@ -240,9 +257,28 @@ abstract final class GameEngine {
       players: players,
       drawPile: drawPile,
       discardPile: discardPile,
+      currentIndex: endTurn || drawn.isEmpty
+          ? s.nextIndex(s.currentIndex, 1)
+          : s.currentIndex,
+      rainbowFree: s.rainbowFree,
+      turnEndsAt: _deadline(s.mode, now),
+      drawnCardId: endTurn || drawn.isEmpty ? null : drawn.single.id,
+      event: GameEvent(eventType, playerId),
+    );
+  }
+
+  static GameState _pass(
+    GameState s,
+    String playerId,
+    DateTime now,
+    GameEventType eventType,
+  ) {
+    if (s.currentPlayer.id != playerId || s.drawnCardId == null) return s;
+    return s.copyWith(
       currentIndex: s.nextIndex(s.currentIndex, 1),
       rainbowFree: s.rainbowFree,
       turnEndsAt: _deadline(s.mode, now),
+      drawnCardId: null,
       event: GameEvent(eventType, playerId),
     );
   }

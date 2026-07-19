@@ -15,6 +15,7 @@ import '../domain/uno_card.dart';
 import 'game_controller.dart';
 import 'game_event_text.dart';
 import 'widgets/color_picker_sheet.dart';
+import 'widgets/game_event_fx.dart';
 import 'widgets/opponent_seat.dart';
 import 'widgets/player_hand.dart';
 import 'widgets/quick_chat_bar.dart';
@@ -75,6 +76,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final id = _localId;
     if (id == null) return;
     ref.read(gameControllerProvider.notifier).submit(SayUnoAction(id));
+  }
+
+  void _pass() {
+    final id = _localId;
+    if (id == null) return;
+    ref.read(gameControllerProvider.notifier).submit(PassAction(id));
   }
 
   void _showChat(String phrase) {
@@ -142,6 +149,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               onPlay: (card) => _play(state, card),
               onDraw: _draw,
               onUno: _sayUno,
+              onPass: _pass,
               onChat: _showChat,
             ),
           ),
@@ -162,6 +170,7 @@ class _GameBoard extends StatelessWidget {
     required this.onPlay,
     required this.onDraw,
     required this.onUno,
+    required this.onPass,
     required this.onChat,
   });
 
@@ -174,6 +183,7 @@ class _GameBoard extends StatelessWidget {
   final ValueChanged<UnoCard> onPlay;
   final VoidCallback onDraw;
   final VoidCallback onUno;
+  final VoidCallback onPass;
   final ValueChanged<String> onChat;
 
   @override
@@ -192,30 +202,63 @@ class _GameBoard extends StatelessWidget {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 900),
-        child: Column(
-          children: [
-            _TopBar(state: state, onLeave: onLeave),
-            const SizedBox(height: Insets.s),
-            _OpponentsRow(
-              opponents: opponents,
-              currentId: state.currentPlayer.id,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0, -0.15),
+              radius: 1.1,
+              colors: [
+                tableTheme.top.withValues(alpha: 0.96),
+                tableTheme.bottom,
+              ],
             ),
-            Expanded(
-              child: _CenterArea(
-                state: state,
-                myTurn: myTurn,
-                chat: chat,
-                tableTheme: tableTheme,
-                cardBack: cardBack,
-                onDraw: onDraw,
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              GameEventBurst(
+                event: state.event,
+                trigger:
+                    '${state.topCard.id}:${state.event?.type}:${state.currentIndex}',
               ),
-            ),
-            _ActionBar(myTurn: myTurn, canUno: canUno, onUno: onUno),
-            PlayerHand(state: state, myTurn: myTurn, onPlay: onPlay),
-            const SizedBox(height: Insets.s),
-            QuickChatBar(onSend: onChat),
-            const SizedBox(height: Insets.s),
-          ],
+              Column(
+                children: [
+                  _TopBar(state: state, onLeave: onLeave),
+                  const SizedBox(height: Insets.s),
+                  _OpponentsRow(
+                    opponents: opponents,
+                    currentId: state.currentPlayer.id,
+                  ),
+                  Expanded(
+                    child: _CenterArea(
+                      state: state,
+                      myTurn: myTurn,
+                      chat: chat,
+                      tableTheme: tableTheme,
+                      cardBack: cardBack,
+                      onDraw: onDraw,
+                    ),
+                  ),
+                  _ActionBar(
+                    myTurn: myTurn,
+                    canUno: canUno,
+                    canPass: myTurn && state.drawnCardId != null,
+                    onUno: onUno,
+                    onPass: onPass,
+                  ),
+                  PlayerHand(
+                    state: state,
+                    playerId: me.id,
+                    myTurn: myTurn,
+                    onPlay: onPlay,
+                  ),
+                  const SizedBox(height: Insets.s),
+                  QuickChatBar(onSend: onChat),
+                  const SizedBox(height: Insets.s),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -232,19 +275,34 @@ class _TopBar extends StatelessWidget {
     final seconds = state.mode.turnSeconds;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.s),
-      child: Row(
-        children: [
-          IconButton(onPressed: onLeave, icon: const Icon(Icons.close_rounded)),
-          Text(
-            '${state.mode.emoji} ${state.mode.label}',
-            style: Theme.of(context).textTheme.titleSmall,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: Insets.xs),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.78),
+          borderRadius: BorderRadius.circular(Corners.l),
+          border: Border.all(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.08),
           ),
-          const Spacer(),
-          ActiveColorDot(color: state.activeColor),
-          const SizedBox(width: Insets.m),
-          if (seconds != null && state.turnEndsAt != null)
-            TurnTimer(endsAt: state.turnEndsAt!, totalSeconds: seconds),
-        ],
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: onLeave,
+              icon: const Icon(Icons.close_rounded),
+            ),
+            Text(
+              '${state.mode.emoji} ${state.mode.label}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const Spacer(),
+            ActiveColorDot(color: state.activeColor),
+            const SizedBox(width: Insets.m),
+            if (seconds != null && state.turnEndsAt != null)
+              TurnTimer(endsAt: state.turnEndsAt!, totalSeconds: seconds),
+          ],
+        ),
       ),
     );
   }
@@ -296,23 +354,23 @@ class _CenterArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final banner = describeEvent(state);
+    final banner =
+        describeEvent(state) ??
+        (myTurn ? S.yourTurn : S.turnOf(state.currentPlayer.name));
+    final canDraw = myTurn && state.drawnCardId == null;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        SizedBox(
-          height: 28,
-          child: chat != null
-              ? ChatBubble(text: chat!)
-              : (banner != null
-                    ? Text(
-                        banner,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      )
-                    : null),
-        ),
+        chat != null
+            ? SizedBox(height: 42, child: ChatBubble(text: chat!))
+            : GameEventBanner(
+                message: banner,
+                event: state.event,
+                isMyTurn: myTurn,
+              ),
         const SizedBox(height: Insets.s),
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
           margin: const EdgeInsets.symmetric(horizontal: Insets.l),
           padding: const EdgeInsets.symmetric(
             horizontal: Insets.xl,
@@ -325,6 +383,16 @@ class _CenterArea extends StatelessWidget {
               colors: [tableTheme.top, tableTheme.bottom],
             ),
             borderRadius: BorderRadius.circular(Corners.l),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: (myTurn ? tableTheme.top : Colors.black).withValues(
+                  alpha: myTurn ? 0.38 : 0.18,
+                ),
+                blurRadius: myTurn ? 26 : 12,
+                spreadRadius: myTurn ? 1 : 0,
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -332,7 +400,7 @@ class _CenterArea extends StatelessWidget {
             children: [
               _DrawPile(
                 count: state.drawPile.length,
-                enabled: myTurn,
+                enabled: canDraw,
                 cardBack: cardBack,
                 onTap: onDraw,
               ),
@@ -353,14 +421,18 @@ class _CenterArea extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Insets.m),
-        AnimatedOpacity(
-          opacity: myTurn ? 1 : 0,
-          duration: const Duration(milliseconds: 200),
-          child: Chip(
-            avatar: const Text('👉'),
-            label: Text(S.yourTurn),
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: state.drawnCardId != null && myTurn
+              ? Text(
+                  S.drawnCardHint,
+                  key: const ValueKey('drawn-hint'),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              : const SizedBox(key: ValueKey('empty-hint')),
         ),
       ],
     );
@@ -415,11 +487,15 @@ class _ActionBar extends StatefulWidget {
   const _ActionBar({
     required this.myTurn,
     required this.canUno,
+    required this.canPass,
     required this.onUno,
+    required this.onPass,
   });
   final bool myTurn;
   final bool canUno;
+  final bool canPass;
   final VoidCallback onUno;
+  final VoidCallback onPass;
 
   @override
   State<_ActionBar> createState() => _ActionBarState();
@@ -463,9 +539,17 @@ class _ActionBarState extends State<_ActionBar>
         horizontal: Insets.m,
         vertical: Insets.xs,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Wrap(
+        spacing: Insets.s,
+        runSpacing: Insets.xs,
+        alignment: WrapAlignment.center,
         children: [
+          if (widget.canPass)
+            OutlinedButton.icon(
+              onPressed: widget.onPass,
+              icon: const Icon(Icons.skip_next_rounded),
+              label: Text(S.finishTurn),
+            ),
           Transform.scale(
             scale: scale,
             child: FilledButton.icon(

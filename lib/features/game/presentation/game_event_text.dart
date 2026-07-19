@@ -24,6 +24,8 @@ String? describeEvent(GameState state) {
       return S.drewFour(target);
     case GameEventType.timeoutDraw:
       return S.timeoutDraw(actor);
+    case GameEventType.passed:
+      return S.turnOf(actor);
     case GameEventType.extraTurn:
       return S.extraTurn(actor);
     case GameEventType.gift:

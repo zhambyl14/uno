@@ -11,6 +11,7 @@ enum GameEventType {
   reverse,
   drewTwo,
   drewFour,
+  passed,
   extraTurn,
   gift,
   shuffleHands,
@@ -114,6 +115,7 @@ class GameState {
     this.phase = GamePhase.playing,
     this.winnerId,
     this.turnEndsAt,
+    this.drawnCardId,
     this.event,
   });
 
@@ -135,6 +137,10 @@ class GameState {
   final GamePhase phase;
   final String? winnerId;
   final DateTime? turnEndsAt;
+
+  /// The only card that may be played after the current player draws.
+  /// A null value means the player has not drawn during this turn.
+  final String? drawnCardId;
   final GameEvent? event;
 
   GamePlayer get currentPlayer => players[currentIndex];
@@ -152,6 +158,8 @@ class GameState {
     return ((from + direction * steps) % n + n) % n;
   }
 
+  static const _unset = Object();
+
   GameState copyWith({
     List<GamePlayer>? players,
     List<UnoCard>? drawPile,
@@ -163,6 +171,7 @@ class GameState {
     GamePhase? phase,
     String? winnerId,
     DateTime? turnEndsAt,
+    Object? drawnCardId = _unset,
     GameEvent? event,
   }) => GameState(
     roomId: roomId,
@@ -177,6 +186,9 @@ class GameState {
     phase: phase ?? this.phase,
     winnerId: winnerId ?? this.winnerId,
     turnEndsAt: turnEndsAt ?? this.turnEndsAt,
+    drawnCardId: identical(drawnCardId, _unset)
+        ? this.drawnCardId
+        : drawnCardId as String?,
     event: event ?? this.event,
   );
 
@@ -193,6 +205,7 @@ class GameState {
     'phase': phase.index,
     'winner': winnerId,
     'endsAt': turnEndsAt?.millisecondsSinceEpoch,
+    'drawn': drawnCardId,
     'event': event?.toJson(),
   };
 
@@ -220,6 +233,7 @@ class GameState {
     turnEndsAt: json['endsAt'] == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(json['endsAt'] as int),
+    drawnCardId: json['drawn'] as String?,
     event: json['event'] == null
         ? null
         : GameEvent.fromJson(json['event'] as Map<String, dynamic>),

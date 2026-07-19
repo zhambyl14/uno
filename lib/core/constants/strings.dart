@@ -504,6 +504,13 @@ abstract final class S {
   static const unoButton = 'UNO!';
   static String get drawCard =>
       _v(kk: 'Карта алу', ru: 'Взять карту', en: 'Draw card');
+  static String get finishTurn =>
+      _v(kk: 'Кезекті аяқтау', ru: 'Завершить ход', en: 'End turn');
+  static String get drawnCardHint => _v(
+    kk: 'Түскен картаны ойна немесе кезекті аяқта',
+    ru: 'Сыграй взятую карту или заверши ход',
+    en: 'Play the drawn card or end your turn',
+  );
   static String saidUno(String name) => '$name: UNO! 🔥';
   static String unoPenalty(String name) => _v(
     kk: '$name UNO айтуды ұмытты: +2 карта',

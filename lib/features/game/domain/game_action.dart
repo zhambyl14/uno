@@ -25,6 +25,8 @@ sealed class GameAction {
         return SayUnoAction(playerId);
       case 'timeout':
         return TimeoutAction(playerId);
+      case 'pass':
+        return PassAction(playerId);
       case 'leave':
         return LeaveAction(playerId);
       default:
@@ -68,6 +70,13 @@ class TimeoutAction extends GameAction {
   const TimeoutAction(super.playerId);
   @override
   Map<String, dynamic> toJson() => {'k': 'timeout', 'p': playerId};
+}
+
+/// Ends the turn after drawing a card that the player chose not to play.
+class PassAction extends GameAction {
+  const PassAction(super.playerId);
+  @override
+  Map<String, dynamic> toJson() => {'k': 'pass', 'p': playerId};
 }
 
 /// A player left mid-game: their seat is handed to a bot so the game

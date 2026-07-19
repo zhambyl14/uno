@@ -7,6 +7,7 @@ import 'package:uno_family/features/game/domain/game_engine.dart';
 import 'package:uno_family/features/game/domain/game_mode.dart';
 import 'package:uno_family/features/game/domain/game_state.dart';
 import 'package:uno_family/features/game/domain/uno_card.dart';
+import 'package:uno_family/features/game/domain/uno_rules.dart';
 
 UnoCard card(String id, CardColor color, CardType type, [int number = -1]) =>
     UnoCard(id: id, color: color, type: type, number: number);
@@ -246,6 +247,51 @@ void main() {
       expect(identical(next, s), isTrue);
     });
 
+    test('wild draw four is rejected when a matching color is available', () {
+      final s = state(
+        players: [
+          player('a', [
+            card('w4', CardColor.wild, CardType.wildFour),
+            card('red', CardColor.red, CardType.number, 1),
+          ]),
+          player('b', const []),
+        ],
+        top: card('top', CardColor.red, CardType.number, 5),
+      );
+      final next = apply(
+        s,
+        const PlayCardAction('a', cardId: 'w4', chosenColor: CardColor.blue),
+      );
+      expect(identical(next, s), isTrue);
+    });
+
+    test('wild draw four is legal with no card of the active color', () {
+      final s = state(
+        players: [
+          player('a', [
+            card('w4', CardColor.wild, CardType.wildFour),
+            card('blue', CardColor.blue, CardType.number, 1),
+            card('keep', CardColor.green, CardType.number, 6),
+          ]),
+          player('b', const []),
+        ],
+        top: card('top', CardColor.red, CardType.number, 5),
+        drawPile: [
+          card('d1', CardColor.yellow, CardType.number, 1),
+          card('d2', CardColor.yellow, CardType.number, 2),
+          card('d3', CardColor.yellow, CardType.number, 3),
+          card('d4', CardColor.yellow, CardType.number, 4),
+        ],
+      );
+      expect(UnoRules.canPlayCard(s, s.currentPlayer.hand.first), isTrue);
+      final next = apply(
+        s,
+        const PlayCardAction('a', cardId: 'w4', chosenColor: CardColor.blue),
+      );
+      expect(next.topCard.id, 'w4');
+      expect(next.playerById('b')!.hand.length, 4);
+    });
+
     test('star grants an extra turn (same player)', () {
       final s = state(
         players: [
@@ -277,7 +323,7 @@ void main() {
   });
 
   group('draw and timeout', () {
-    test('drawing advances the turn', () {
+    test('drawing keeps the turn until the player plays or passes', () {
       final s = state(
         players: [player('a', const []), player('b', const [])],
         top: card('top', CardColor.red, CardType.number, 5),
@@ -285,7 +331,30 @@ void main() {
       );
       final next = apply(s, const DrawCardAction('a'));
       expect(next.playerById('a')!.hand.length, 1);
-      expect(next.currentIndex, 1);
+      expect(next.currentIndex, 0);
+      expect(next.drawnCardId, 'd1');
+
+      final passed = apply(next, const PassAction('a'));
+      expect(passed.currentIndex, 1);
+      expect(passed.drawnCardId, isNull);
+    });
+
+    test('after drawing, only the drawn card can be played', () {
+      final s = state(
+        players: [
+          player('a', [card('old', CardColor.red, CardType.number, 7)]),
+          player('b', const []),
+        ],
+        top: card('top', CardColor.red, CardType.number, 5),
+        drawPile: [card('drawn', CardColor.red, CardType.number, 2)],
+      );
+      final drawn = apply(s, const DrawCardAction('a'));
+      final rejected = apply(drawn, const PlayCardAction('a', cardId: 'old'));
+      expect(identical(rejected, drawn), isTrue);
+
+      final played = apply(drawn, const PlayCardAction('a', cardId: 'drawn'));
+      expect(played.topCard.id, 'drawn');
+      expect(played.currentIndex, 1);
     });
 
     test('timeout forces the current player to draw', () {
@@ -328,14 +397,22 @@ void main() {
       while (s.phase == GamePhase.playing && guard < 5000) {
         guard++;
         final me = s.currentPlayer;
+        if (s.drawnCardId != null) {
+          final drawn = me.hand.firstWhere((c) => c.id == s.drawnCardId);
+          s = UnoRules.canPlayCard(s, drawn)
+              ? apply(
+                  s,
+                  PlayCardAction(
+                    me.id,
+                    cardId: drawn.id,
+                    chosenColor: drawn.needsColorChoice ? CardColor.red : null,
+                  ),
+                )
+              : apply(s, PassAction(me.id));
+          continue;
+        }
         final playable = me.hand
-            .where(
-              (c) => c.matches(
-                activeColor: s.activeColor,
-                top: s.topCard,
-                rainbowFree: s.rainbowFree,
-              ),
-            )
+            .where((c) => UnoRules.canPlayCard(s, c))
             .toList();
         if (me.hand.length == 2 && !me.saidUno) {
           s = apply(s, SayUnoAction(me.id));

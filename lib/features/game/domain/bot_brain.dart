@@ -3,6 +3,7 @@ import 'dart:math';
 import 'game_action.dart';
 import 'game_state.dart';
 import 'uno_card.dart';
+import 'uno_rules.dart';
 
 /// Simple friendly AI for bot seats.
 abstract final class BotBrain {
@@ -14,6 +15,24 @@ abstract final class BotBrain {
     if (bot == null || s.currentPlayer.id != botId) return const [];
     final actions = <GameAction>[];
 
+    // A drawn card must be resolved before the bot can end its turn. This
+    // mirrors the same one-card-only rule used by the human UI.
+    if (s.drawnCardId != null) {
+      final drawn = bot.hand.where((c) => c.id == s.drawnCardId).firstOrNull;
+      if (drawn != null && UnoRules.canPlayCard(s, drawn)) {
+        return [
+          PlayCardAction(
+            botId,
+            cardId: drawn.id,
+            chosenColor: drawn.needsColorChoice
+                ? _bestColor(bot.hand, drawn, rng)
+                : null,
+          ),
+        ];
+      }
+      return [PassAction(botId)];
+    }
+
     // Bots remember to say UNO most of the time — but not always.
     if (bot.hand.length == 2 && !bot.saidUno && rng.nextDouble() < 0.85) {
       actions.add(SayUnoAction(botId));
@@ -21,12 +40,7 @@ abstract final class BotBrain {
 
     final playable = [
       for (final card in bot.hand)
-        if (card.matches(
-          activeColor: s.activeColor,
-          top: s.topCard,
-          rainbowFree: s.rainbowFree,
-        ))
-          card,
+        if (UnoRules.canPlayCard(s, card)) card,
     ];
     if (playable.isEmpty) {
       actions.add(DrawCardAction(botId));
