@@ -40,6 +40,24 @@ abstract final class Avatars {
       AvatarDef('lollipop', '🍭', Color(0xFFFFE0F0)),
       AvatarDef('strawberry', '🍓', Color(0xFFFFCDD2)),
     ],
+    'pack_farm': [
+      AvatarDef('cow', '🐮', Color(0xFFF5F5F5)),
+      AvatarDef('pig', '🐷', Color(0xFFFFDCE0)),
+      AvatarDef('chick', '🐥', Color(0xFFFFF9C4)),
+      AvatarDef('sheep', '🐑', Color(0xFFECEFF1)),
+    ],
+    'pack_space': [
+      AvatarDef('alien', '👽', Color(0xFFC8E6C9)),
+      AvatarDef('ufo', '🛸', Color(0xFFB2EBF2)),
+      AvatarDef('moon', '🌙', Color(0xFFE8EAF6)),
+      AvatarDef('comet', '☄️', Color(0xFFFFE0B2)),
+    ],
+    'pack_forest': [
+      AvatarDef('owl', '🦉', Color(0xFFD7CCC8)),
+      AvatarDef('hedgehog', '🦔', Color(0xFFEFEBE9)),
+      AvatarDef('deer', '🦌', Color(0xFFFFE0B2)),
+      AvatarDef('squirrel', '🐿️', Color(0xFFFFCC80)),
+    ],
   };
 
   static AvatarDef byId(String id) {

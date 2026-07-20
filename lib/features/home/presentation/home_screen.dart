@@ -289,19 +289,26 @@ class _PlayHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Insets.xs),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               TextButton.icon(
                 onPressed: onPlayWithFriends,
-                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: Insets.s),
+                ),
                 icon: const Icon(Icons.people_alt_outlined, size: 18),
                 label: Text(S.playWithFriends),
               ),
               if (onPlayWithAnyone != null)
                 TextButton.icon(
                   onPressed: onPlayWithAnyone,
-                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: Insets.s),
+                  ),
                   icon: const Icon(Icons.public_rounded, size: 18),
                   label: Text(S.playWithAnyone),
                 ),

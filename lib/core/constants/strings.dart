@@ -214,11 +214,8 @@ abstract final class S {
   static String get playNow => _v(kk: 'Ойнау', ru: 'Играть', en: 'Play');
   static String get quickPlay =>
       _v(kk: 'Жылдам ойын', ru: 'Быстрая игра', en: 'Quick play');
-  static String get playWithAnyone => _v(
-    kk: 'Кез келген ойыншымен ойнау',
-    ru: 'Играть со случайным игроком',
-    en: 'Play with anyone online',
-  );
+  static String get playWithAnyone =>
+      _v(kk: 'Кез келгенмен', ru: 'Со случайным', en: 'Anyone online');
   static String get playWithFriends => _v(
     kk: 'Достармен ойнау',
     ru: 'Играть с друзьями',
@@ -383,7 +380,7 @@ abstract final class S {
   );
   static String get addFriend =>
       _v(kk: 'Дос қосу', ru: 'Добавить друга', en: 'Add friend');
-  static const friendCodeHint = 'UNO-1234-5678';
+  static const friendCodeHint = '12345678';
   static String get add => _v(kk: 'Қосу', ru: 'Добавить', en: 'Add');
   static String get friendAdded => _v(
     kk: 'Дос қосылды! 🎉',
@@ -701,6 +698,14 @@ abstract final class S {
       _v(kk: 'Күлгін үстел', ru: 'Фиолетовый стол', en: 'Purple table');
   static String get itemSunset =>
       _v(kk: 'Күн батысы', ru: 'Закат', en: 'Sunset');
+  static String get itemFarm => _v(kk: 'Ферма', ru: 'Ферма', en: 'Farm');
+  static String get itemSpace => _v(kk: 'Ғарыш', ru: 'Космос', en: 'Space');
+  static String get itemForest => _v(kk: 'Орман', ru: 'Лес', en: 'Forest');
+  static String get itemOcean => _v(kk: 'Мұхит', ru: 'Океан', en: 'Ocean');
+  static String get itemGold => _v(kk: 'Алтын', ru: 'Золото', en: 'Gold');
+  static String get itemMidnight =>
+      _v(kk: 'Түн ортасы', ru: 'Полночь', en: 'Midnight');
+  static String get itemRose => _v(kk: 'Раушан', ru: 'Роза', en: 'Rose');
 
   static String get buy => _v(kk: 'Сатып алу', ru: 'Купить', en: 'Buy');
   static String get equip => _v(kk: 'Қолдану', ru: 'Применить', en: 'Equip');

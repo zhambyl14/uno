@@ -64,8 +64,10 @@ class GameController extends Notifier<GameSession?> {
 
   void submit(GameAction action) => state?.submit(action);
 
-  /// Finalizes the match: grants rewards, updates missions, stores the
-  /// result for the results screen, and clears the session.
+  /// Finalizes the match: stores the result for the results screen right
+  /// away, then best-effort syncs rewards/missions to the profile in the
+  /// background. A slow or unreachable backend must never leave the player
+  /// stuck staring at a frozen game screen after they've already won.
   Future<void> endAndAward() async {
     final session = state;
     if (session == null) return;
@@ -75,22 +77,30 @@ class GameController extends Notifier<GameSession?> {
       session.localStats,
     );
     state = null; // guard against a double award
-
-    await ref
-        .read(authControllerProvider.notifier)
-        .applyMatchResult(
-          won: result.isLocalWin,
-          xpGain: result.xpGain,
-          coinGain: result.coinGain,
-          rankGain: result.rankGain,
-        );
-    final missions = ref.read(missionsControllerProvider.notifier);
-    missions.recordGamePlayed(
-      won: result.isLocalWin,
-      unosSaid: result.stats.unosSaid,
-    );
-    missions.recordCardsPlayed(result.stats.cardsPlayed);
     ref.read(lastResultProvider.notifier).set(result);
+
+    unawaited(
+      ref
+          .read(authControllerProvider.notifier)
+          .applyMatchResult(
+            won: result.isLocalWin,
+            xpGain: result.xpGain,
+            coinGain: result.coinGain,
+            rankGain: result.rankGain,
+          )
+          .timeout(const Duration(seconds: 8), onTimeout: () {})
+          .catchError((_) {}),
+    );
+    try {
+      final missions = ref.read(missionsControllerProvider.notifier);
+      missions.recordGamePlayed(
+        won: result.isLocalWin,
+        unosSaid: result.stats.unosSaid,
+      );
+      missions.recordCardsPlayed(result.stats.cardsPlayed);
+    } catch (_) {
+      // Missions are a nice-to-have; never let them block finishing a match.
+    }
     await session.dispose();
   }
 }

@@ -225,11 +225,13 @@ class _AddFriendDialogState extends State<_AddFriendDialog> {
           TextField(
             controller: _controller,
             autofocus: true,
-            textCapitalization: TextCapitalization.characters,
+            keyboardType: TextInputType.number,
+            maxLength: 8,
             decoration: InputDecoration(
               labelText: S.friendCodeHint,
               errorText: _error,
               prefixIcon: const Icon(Icons.tag_rounded),
+              counterText: '',
             ),
             onSubmitted: (_) => _submit(),
           ),

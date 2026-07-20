@@ -30,11 +30,18 @@ class ShopItem {
     'pack_jungle' => S.itemJungle,
     'pack_sea' => S.itemSea,
     'pack_sweets' => S.itemSweets,
+    'pack_farm' => S.itemFarm,
+    'pack_space' => S.itemSpace,
+    'pack_forest' => S.itemForest,
     'skin_night' => S.itemNight,
     'skin_candy' => S.itemCandy,
+    'skin_ocean' => S.itemOcean,
+    'skin_gold' => S.itemGold,
     'theme_blue' => S.itemBlueTable,
     'theme_purple' => S.itemPurpleTable,
     'theme_sunset' => S.itemSunset,
+    'theme_midnight' => S.itemMidnight,
+    'theme_rose' => S.itemRose,
     _ => id,
   };
 }
@@ -49,6 +56,8 @@ class CardSkin {
     'skin_classic': CardSkin('skin_classic', Color(0xFF3B3B54)),
     'skin_night': CardSkin('skin_night', Color(0xFF10203A)),
     'skin_candy': CardSkin('skin_candy', Color(0xFFB0356B)),
+    'skin_ocean': CardSkin('skin_ocean', Color(0xFF00565B)),
+    'skin_gold': CardSkin('skin_gold', Color(0xFF8A6A12)),
   };
 
   static CardSkin byId(String id) => all[id] ?? all['skin_classic']!;
@@ -82,6 +91,16 @@ class TableTheme {
       Color(0xFF7D3A2E),
       Color(0xFFB5632E),
     ),
+    'theme_midnight': TableTheme(
+      'theme_midnight',
+      Color(0xFF0B1026),
+      Color(0xFF1B2A4A),
+    ),
+    'theme_rose': TableTheme(
+      'theme_rose',
+      Color(0xFF4A1E2E),
+      Color(0xFF7D2E52),
+    ),
   };
 
   static TableTheme byId(String id) => all[id] ?? all['theme_green']!;
@@ -114,6 +133,30 @@ abstract final class Shop {
       previewB: Color(0xFFE1BEE7),
       emoji: '🍩',
     ),
+    ShopItem(
+      id: 'pack_farm',
+      price: 90,
+      category: ShopCategory.avatars,
+      previewA: Color(0xFFF5F5F5),
+      previewB: Color(0xFFFFF9C4),
+      emoji: '🐮',
+    ),
+    ShopItem(
+      id: 'pack_space',
+      price: 180,
+      category: ShopCategory.avatars,
+      previewA: Color(0xFFC8E6C9),
+      previewB: Color(0xFFE8EAF6),
+      emoji: '👽',
+    ),
+    ShopItem(
+      id: 'pack_forest',
+      price: 140,
+      category: ShopCategory.avatars,
+      previewA: Color(0xFFD7CCC8),
+      previewB: Color(0xFFFFE0B2),
+      emoji: '🦉',
+    ),
     // Card skins.
     ShopItem(
       id: 'skin_night',
@@ -130,6 +173,22 @@ abstract final class Shop {
       previewA: Color(0xFFB0356B),
       previewB: Color(0xFFF8BBD0),
       emoji: '🍬',
+    ),
+    ShopItem(
+      id: 'skin_ocean',
+      price: 130,
+      category: ShopCategory.cardSkins,
+      previewA: Color(0xFF00565B),
+      previewB: Color(0xFF00838F),
+      emoji: '🌊',
+    ),
+    ShopItem(
+      id: 'skin_gold',
+      price: 200,
+      category: ShopCategory.cardSkins,
+      previewA: Color(0xFF8A6A12),
+      previewB: Color(0xFFFFD84D),
+      emoji: '✨',
     ),
     // Table themes.
     ShopItem(
@@ -155,6 +214,22 @@ abstract final class Shop {
       previewA: Color(0xFF7D3A2E),
       previewB: Color(0xFFB5632E),
       emoji: '🌅',
+    ),
+    ShopItem(
+      id: 'theme_midnight',
+      price: 130,
+      category: ShopCategory.tableThemes,
+      previewA: Color(0xFF0B1026),
+      previewB: Color(0xFF1B2A4A),
+      emoji: '🌌',
+    ),
+    ShopItem(
+      id: 'theme_rose',
+      price: 130,
+      category: ShopCategory.tableThemes,
+      previewA: Color(0xFF4A1E2E),
+      previewB: Color(0xFF7D2E52),
+      emoji: '🌹',
     ),
   ];
 
