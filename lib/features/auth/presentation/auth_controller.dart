@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/catalog.dart';
 import '../../../core/constants/strings.dart';
-import '../../../core/services/online_mode.dart';
+import '../../../core/services/prefs_service.dart';
 import '../../../core/services/push_service.dart';
 import '../../../core/utils/failures.dart';
 import '../../../core/utils/nickname_filter.dart';
@@ -46,32 +46,32 @@ class AuthController extends AsyncNotifier<PlayerProfile?> {
     return _autoGuest(repo);
   }
 
-  /// Creates the automatic guest. If the online backend rejects anonymous
-  /// sign-in (Anonymous auth disabled, or no network), it drops the whole app
-  /// to fully-local mode and retries with the local guest — which always
-  /// succeeds — so the player is never stranded profile-less. The provider
-  /// swap re-runs [build] with the local repositories.
+  /// Creates the automatic guest. Tries the online backend first; if that
+  /// fails (e.g. Anonymous auth disabled in the Supabase dashboard, or no
+  /// network), falls back to an ephemeral LOCAL guest so "Play vs bots"
+  /// always works — but crucially this does NOT disable online mode for the
+  /// rest of the app: Login stays wired to the real Supabase repository, so
+  /// manual email/Google/Apple sign-in keeps working even when the silent
+  /// guest auto-login couldn't. A local-fallback guest has no server-side
+  /// identity, so friends/rooms stay unavailable until the player signs in
+  /// for real (or an admin enables Anonymous auth).
   Future<PlayerProfile?> _autoGuest(AuthRepository repo) async {
+    final rng = Random();
+    final avatar = Avatars.free[rng.nextInt(Avatars.free.length)];
+    final nickname = 'player${1000 + rng.nextInt(9000)}';
     try {
-      final rng = Random();
-      final avatar = Avatars.free[rng.nextInt(Avatars.free.length)];
       return await repo.signInGuest(
-        nickname: 'player${1000 + rng.nextInt(9000)}',
+        nickname: nickname,
         avatarId: avatar.id,
         isChild: false,
       );
     } catch (_) {
-      // Defer: a provider can't be mutated during another provider's build.
-      if (ref.read(isOnlineProvider)) {
-        unawaited(
-          Future(() {
-            if (ref.mounted) {
-              ref.read(isOnlineProvider.notifier).forceOffline();
-            }
-          }),
-        );
-      }
-      return null;
+      final prefs = ref.read(prefsServiceProvider);
+      return LocalAuthRepository(prefs).signInGuest(
+        nickname: nickname,
+        avatarId: avatar.id,
+        isChild: false,
+      );
     }
   }
 
