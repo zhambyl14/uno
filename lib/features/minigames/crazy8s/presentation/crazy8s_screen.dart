@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/insets.dart';
 import '../../../../core/constants/strings.dart';
+import '../../../../core/services/haptics.dart';
 import '../../../../core/widgets/adaptive_scaffold.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../domain/playing_card.dart';
@@ -82,7 +82,7 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
   }
 
   void _apply(PlayingCard card, Suit suit, {required bool fromMe}) {
-    HapticFeedback.selectionClick();
+    GameHaptics.tap();
     setState(() {
       (fromMe ? _myHand : _botHand).remove(card);
       _top = card;
@@ -99,15 +99,16 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
   void _drawMine() {
     if (!_myTurn || _finished) return;
     if (_stock.isEmpty) {
+      // Nothing left to draw — end the turn.
       _passTurn(fromMe: true);
       return;
     }
-    HapticFeedback.selectionClick();
+    GameHaptics.tap();
     setState(() {
       _myHand.add(_stock.removeLast());
       _passStreak = 0;
     });
-    _handOff(toMe: false);
+    // Keep the turn: the player may now play the card they just drew.
   }
 
   void _passTurn({required bool fromMe}) {
@@ -178,7 +179,7 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
       _message = null;
     });
     if (iWon) {
-      HapticFeedback.heavyImpact();
+      GameHaptics.success();
       unawaited(ref.read(authControllerProvider.notifier).creditCoins(20));
     }
   }
@@ -208,7 +209,12 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
                   top: _top,
                   activeSuit: _activeSuit,
                   stockCount: _stock.length,
-                  onDraw: _myTurn && !_finished ? _drawMine : null,
+                  onDraw:
+                      (_myTurn &&
+                          !_finished &&
+                          (_stock.isNotEmpty || !_myHand.any(_canPlay)))
+                      ? _drawMine
+                      : null,
                   message: _message,
                 ),
                 const Spacer(),
@@ -274,8 +280,10 @@ class _TableCenter extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Insets.xs),
-                Text('${S.drawCard} ($stockCount)',
-                    style: theme.textTheme.labelSmall),
+                Text(
+                  stockCount > 0 ? '${S.drawCard} ($stockCount)' : S.finishTurn,
+                  style: theme.textTheme.labelSmall,
+                ),
               ],
             ),
             const SizedBox(width: Insets.xl),
@@ -375,9 +383,9 @@ class _BotRow extends StatelessWidget {
         const SizedBox(width: Insets.s),
         Text(
           '$count 🂠',
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -461,9 +469,7 @@ class _CardBack extends StatelessWidget {
         borderRadius: BorderRadius.circular(Corners.card),
         border: Border.all(color: Colors.white, width: 2),
       ),
-      child: const Center(
-        child: Text('🎴', style: TextStyle(fontSize: 26)),
-      ),
+      child: const Center(child: Text('🎴', style: TextStyle(fontSize: 26))),
     );
   }
 }
@@ -479,9 +485,9 @@ class _SuitPicker extends StatelessWidget {
           children: [
             Text(
               S.chooseSuit,
-              style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: Insets.m),
             Row(
@@ -495,7 +501,9 @@ class _SuitPicker extends StatelessWidget {
                       height: 64,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(Corners.m),
                       ),
                       child: Text(

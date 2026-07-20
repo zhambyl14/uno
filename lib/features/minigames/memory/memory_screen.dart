@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/haptics.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../game/domain/uno_card.dart';
@@ -100,7 +100,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
     if (_busy || _won) return;
     final tile = _tiles[index];
     if (tile.flipped || tile.matched) return;
-    HapticFeedback.selectionClick();
+    GameHaptics.tap();
     setState(() => tile.flipped = true);
 
     if (_firstIndex == null) {
@@ -115,7 +115,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
         tile.matched = true;
         _firstIndex = null;
       });
-      HapticFeedback.lightImpact();
+      GameHaptics.light();
       if (_tiles.every((t) => t.matched)) _handleWin();
     } else {
       _busy = true;
@@ -134,7 +134,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
 
   void _handleWin() {
     setState(() => _won = true);
-    HapticFeedback.heavyImpact();
+    GameHaptics.success();
     // A small reward keeps mini-games tied into progression.
     unawaited(ref.read(authControllerProvider.notifier).creditCoins(15));
   }
@@ -184,13 +184,12 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
                   Padding(
                     padding: const EdgeInsets.all(Insets.m),
                     child: GridView.builder(
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: _difficulty.columns,
-                            childAspectRatio: 0.72,
-                            crossAxisSpacing: Insets.s,
-                            mainAxisSpacing: Insets.s,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _difficulty.columns,
+                        childAspectRatio: 0.72,
+                        crossAxisSpacing: Insets.s,
+                        mainAxisSpacing: Insets.s,
+                      ),
                       itemCount: _tiles.length,
                       itemBuilder: (context, index) => _MemoryTile(
                         tile: _tiles[index],
@@ -232,11 +231,7 @@ class _MemoryTile extends StatelessWidget {
           child: SizedBox(
             key: ValueKey(faceUp),
             child: Center(
-              child: UnoCardView(
-                card: tile.card,
-                width: 66,
-                faceUp: faceUp,
-              ),
+              child: UnoCardView(card: tile.card, width: 66, faceUp: faceUp),
             ),
           ),
         ),

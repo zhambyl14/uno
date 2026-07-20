@@ -23,54 +23,54 @@ class OpponentSeat extends StatelessWidget {
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOut,
       child: AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      padding: const EdgeInsets.all(Insets.xs),
-      decoration: BoxDecoration(
-        color: isCurrent ? scheme.primaryContainer : Colors.transparent,
-        borderRadius: BorderRadius.circular(Corners.m),
-        border: Border.all(
-          color: isCurrent ? scheme.primary : Colors.transparent,
-          width: 2,
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.all(Insets.xs),
+        decoration: BoxDecoration(
+          color: isCurrent ? scheme.primaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(Corners.m),
+          border: Border.all(
+            color: isCurrent ? scheme.primary : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: isCurrent
+              ? [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.45),
+                    blurRadius: 14,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
-        boxShadow: isCurrent
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.45),
-                  blurRadius: 14,
-                  spreadRadius: 1,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AvatarCircle(avatarId: player.avatarId, size: 46),
+                Positioned(
+                  right: -6,
+                  bottom: -6,
+                  child: _CardCountBadge(count: player.hand.length),
                 ),
-              ]
-            : null,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              AvatarCircle(avatarId: player.avatarId, size: 46),
-              Positioned(
-                right: -6,
-                bottom: -6,
-                child: _CardCountBadge(count: player.hand.length),
-              ),
-              if (player.hand.length == 1)
-                const Positioned(top: -10, left: -6, child: _UnoFlag()),
-            ],
-          ),
-          const SizedBox(height: Insets.xs),
-          SizedBox(
-            width: 64,
-            child: Text(
-              player.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall,
+                if (player.hand.length == 1)
+                  const Positioned(top: -10, left: -6, child: _UnoFlag()),
+              ],
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: Insets.xs),
+            SizedBox(
+              width: 64,
+              child: Text(
+                player.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

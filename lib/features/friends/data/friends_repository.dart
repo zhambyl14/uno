@@ -101,8 +101,7 @@ class LocalFriendsRepository implements FriendsRepository {
   }
 
   @override
-  Stream<List<GameInvite>> watchInvites() =>
-      Stream.value(const <GameInvite>[]);
+  Stream<List<GameInvite>> watchInvites() => Stream.value(const <GameInvite>[]);
 
   @override
   Future<void> consumeInvite(int inviteId) async {}

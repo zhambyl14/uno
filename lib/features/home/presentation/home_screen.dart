@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
-import '../../../core/constants/app_config.dart';
 import '../../../core/constants/game_palette.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/online_mode.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
 import '../../../core/widgets/coin_chip.dart';
 import '../../../core/widgets/rank_badge.dart';
@@ -53,12 +53,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(authControllerProvider).value;
-    final isGuest = profile?.isGuest ?? true;
+    final isOnline = ref.watch(isOnlineProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text(S.appName),
         actions: [
-          if (!AppConfig.isOnline)
+          if (!isOnline)
             const Padding(
               padding: EdgeInsets.only(right: Insets.s),
               child: Center(child: _LocalBadge()),
@@ -95,11 +95,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: Insets.l),
             Text(S.chooseMode, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: Insets.s),
-            _ModeGrid(
-              selected: _mode,
-              guestLocked: isGuest,
-              onSelect: _tapMode,
-            ),
+            _ModeGrid(selected: _mode, guestLocked: false, onSelect: _tapMode),
             const SizedBox(height: Insets.l),
             if (profile != null)
               Card(
@@ -136,8 +132,8 @@ class _OtherGamesGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 320,
-        mainAxisExtent: 96,
+        maxCrossAxisExtent: 340,
+        mainAxisExtent: 108,
         crossAxisSpacing: Insets.s,
         mainAxisSpacing: Insets.s,
       ),
@@ -181,17 +177,21 @@ class _MiniGameCard extends StatelessWidget {
                   children: [
                     Text(
                       game.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium!.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      game.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall!.copyWith(
-                        color: scheme.onSurfaceVariant,
+                    Flexible(
+                      child: Text(
+                        game.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],

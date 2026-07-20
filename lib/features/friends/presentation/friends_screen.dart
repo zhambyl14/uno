@@ -40,7 +40,11 @@ class FriendsScreen extends ConsumerWidget {
 
   /// Invites a friend to play: spins up a private room, drops the invite into
   /// it, and takes the host to the waiting room to greet them.
-  Future<void> _invite(BuildContext context, WidgetRef ref, Friend friend) async {
+  Future<void> _invite(
+    BuildContext context,
+    WidgetRef ref,
+    Friend friend,
+  ) async {
     if (!AppConfig.isOnline) {
       context.showSnack(S.onlineOnlyBody);
       return;

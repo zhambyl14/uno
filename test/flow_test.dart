@@ -53,19 +53,26 @@ void main() {
     expect(find.text(S.guestProfileBannerTitle), findsOneWidget);
   });
 
-  testWidgets('guest tapping a locked mode sees a sign-in gate', (
-    tester,
-  ) async {
+  testWidgets('any mode is selectable without a sign-in gate', (tester) async {
     await _boot(tester);
 
+    // Family used to be locked behind sign-in; every mode is now free to pick.
     await tester.tap(find.text('Family'));
     await tester.pumpAndSettle();
 
-    expect(find.text(S.guestGateTitle), findsOneWidget);
+    expect(find.text(S.guestGateTitle), findsNothing);
+    // Still on Home with the mode picker — no interruption.
+    expect(find.text(S.chooseMode), findsOneWidget);
+  });
 
-    await tester.tap(find.text(S.signInNow));
-    await tester.pumpAndSettle();
-
-    expect(find.text(S.loginTitle), findsOneWidget);
+  testWidgets('Home lists the new "Other games"', (tester) async {
+    await _boot(tester);
+    final memory = find.text(S.memoryTitle);
+    await tester.scrollUntilVisible(
+      memory,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(memory, findsOneWidget);
   });
 }

@@ -215,9 +215,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       ),
     );
     // Clear it either way so the prompt doesn't linger on the next stream tick.
-    await ref
-        .read(friendsControllerProvider.notifier)
-        .consumeInvite(invite.id);
+    await ref.read(friendsControllerProvider.notifier).consumeInvite(invite.id);
     if (!mounted || join != true) return;
     // Actually join the room (adds this player to it) before entering.
     try {

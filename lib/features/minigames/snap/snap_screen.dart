@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/haptics.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../game/domain/uno_card.dart';
@@ -120,11 +120,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     if (_finished) return;
     if (_matchOpen) {
       _botTimer?.cancel();
-      HapticFeedback.mediumImpact();
+      GameHaptics.medium();
       _awardPile(toMe: true, message: S.snapYouWon);
     } else {
       // Forgiving for kids: a nudge, a short lock-out, no card loss.
-      HapticFeedback.heavyImpact();
+      GameHaptics.success();
       _showFlash(S.snapTooSoon);
     }
   }
@@ -168,7 +168,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     _botTimer?.cancel();
     setState(() => _finished = true);
     if (_myCards >= _botCards) {
-      HapticFeedback.heavyImpact();
+      GameHaptics.success();
       unawaited(ref.read(authControllerProvider.notifier).creditCoins(15));
     }
   }
@@ -210,8 +210,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                       ),
                     ],
                   ),
-                  if (_flash != null)
-                    _FlashLabel(text: _flash!),
+                  if (_flash != null) _FlashLabel(text: _flash!),
                   if (_finished)
                     Positioned.fill(
                       child: _SnapWinOverlay(
@@ -276,16 +275,8 @@ class _PileView extends StatelessWidget {
             child: FadeTransition(opacity: animation, child: child),
           ),
           child: top == null
-              ? const SizedBox(
-                  key: ValueKey('empty'),
-                  width: 120,
-                  height: 174,
-                )
-              : UnoCardView(
-                  key: ValueKey(top!.id),
-                  card: top!,
-                  width: 120,
-                ),
+              ? const SizedBox(key: ValueKey('empty'), width: 120, height: 174)
+              : UnoCardView(key: ValueKey(top!.id), card: top!, width: 120),
         ),
         if (count > 0)
           Positioned(

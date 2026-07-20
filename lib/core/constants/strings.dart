@@ -866,8 +866,11 @@ UNO FAMILY is a safe online card game for children and families.
       _v(kk: 'Бот дестесі', ru: 'Стопка бота', en: 'Bot pile');
   static String get snapTooSoon =>
       _v(kk: 'Әлі емес!', ru: 'Рано!', en: 'Too soon!');
-  static String get snapBotWon =>
-      _v(kk: 'Бот бірінші болды', ru: 'Бот успел первым', en: 'Bot snapped first');
+  static String get snapBotWon => _v(
+    kk: 'Бот бірінші болды',
+    ru: 'Бот успел первым',
+    en: 'Bot snapped first',
+  );
   static String get snapYouWon =>
       _v(kk: 'Дестені алдың!', ru: 'Стопка твоя!', en: 'You took the pile!');
   static String get snapTapWhenMatch => _v(
@@ -875,7 +878,8 @@ UNO FAMILY is a safe online card game for children and families.
     ru: 'Две одинаковые карты — жми ХВАТЬ',
     en: 'Two matching cards? Hit SNAP',
   );
-  static String get youWon => _v(kk: 'Сен жеңдің! 🏆', ru: 'Ты выиграл! 🏆', en: 'You won! 🏆');
+  static String get youWon =>
+      _v(kk: 'Сен жеңдің! 🏆', ru: 'Ты выиграл! 🏆', en: 'You won! 🏆');
   static String get botWon =>
       _v(kk: 'Бот жеңді', ru: 'Бот выиграл', en: 'Bot won');
 
@@ -884,7 +888,6 @@ UNO FAMILY is a safe online card game for children and families.
       _v(kk: 'Сенің кезегің', ru: 'Твой ход', en: 'Your turn');
   static String get botThinking =>
       _v(kk: 'Бот ойлануда…', ru: 'Бот думает…', en: 'Bot is thinking…');
-  static String get drawCard => _v(kk: 'Карта ал', ru: 'Взять карту', en: 'Draw');
   static String get chooseSuit =>
       _v(kk: 'Масть таңда', ru: 'Выбери масть', en: 'Choose a suit');
 }

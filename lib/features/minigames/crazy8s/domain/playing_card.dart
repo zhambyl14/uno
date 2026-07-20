@@ -14,8 +14,7 @@ extension SuitX on Suit {
 
   bool get isRed => this == Suit.hearts || this == Suit.diamonds;
 
-  Color get color =>
-      isRed ? const Color(0xFFE84C3D) : const Color(0xFF232336);
+  Color get color => isRed ? const Color(0xFFE84C3D) : const Color(0xFF232336);
 }
 
 /// A standard playing card. [rank] is 1..13 (1=Ace, 11=J, 12=Q, 13=K).
