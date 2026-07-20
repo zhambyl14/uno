@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_config.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/online_mode.dart';
 import '../../../core/services/prefs_service.dart';
 import '../../../core/utils/code_gen.dart';
 import '../../../core/utils/failures.dart';
@@ -101,7 +101,7 @@ class LocalAuthRepository implements AuthRepository {
 }
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AppConfig.isOnline
+  (ref) => ref.watch(isOnlineProvider)
       ? SupabaseAuthRepository()
       : LocalAuthRepository(ref.watch(prefsServiceProvider)),
 );

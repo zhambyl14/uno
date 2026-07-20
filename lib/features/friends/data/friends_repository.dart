@@ -2,13 +2,14 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_config.dart';
 import '../../../core/constants/catalog.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/online_mode.dart';
 import '../../../core/services/prefs_service.dart';
 import '../../../core/utils/code_gen.dart';
 import '../../../core/utils/failures.dart';
 import '../domain/friend.dart';
+import '../domain/game_invite.dart';
 import 'supabase_friends_repository.dart';
 
 abstract class FriendsRepository {
@@ -19,8 +20,18 @@ abstract class FriendsRepository {
 
   Future<void> remove(String friendId);
 
-  /// Sends a game invite to a friend (push in online mode).
-  Future<void> invite(String friendId);
+  /// Invites a friend into a specific waiting [roomCode]. Online: writes an
+  /// `invites` row (drives both the recipient's in-app banner and a push).
+  Future<void> inviteToRoom({
+    required String friendId,
+    required String roomCode,
+  });
+
+  /// Live stream of invites addressed to the current user.
+  Stream<List<GameInvite>> watchInvites();
+
+  /// Clears a handled invite so it stops showing.
+  Future<void> consumeInvite(int inviteId);
 }
 
 /// Offline friends list persisted on-device. Since there is no user
@@ -82,13 +93,23 @@ class LocalFriendsRepository implements FriendsRepository {
   }
 
   @override
-  Future<void> invite(String friendId) async {
-    // No backend offline; the UI shows a confirmation only.
+  Future<void> inviteToRoom({
+    required String friendId,
+    required String roomCode,
+  }) async {
+    // No shared backend offline; the UI shows a confirmation only.
   }
+
+  @override
+  Stream<List<GameInvite>> watchInvites() =>
+      Stream.value(const <GameInvite>[]);
+
+  @override
+  Future<void> consumeInvite(int inviteId) async {}
 }
 
 final friendsRepositoryProvider = Provider<FriendsRepository>(
-  (ref) => AppConfig.isOnline
+  (ref) => ref.watch(isOnlineProvider)
       ? SupabaseFriendsRepository()
       : LocalFriendsRepository(ref.watch(prefsServiceProvider)),
 );

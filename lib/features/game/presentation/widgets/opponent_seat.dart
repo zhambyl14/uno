@@ -18,12 +18,29 @@ class OpponentSeat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return AnimatedScale(
+      scale: isCurrent ? 1.06 : 1,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      child: AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
       padding: const EdgeInsets.all(Insets.xs),
       decoration: BoxDecoration(
         color: isCurrent ? scheme.primaryContainer : Colors.transparent,
         borderRadius: BorderRadius.circular(Corners.m),
+        border: Border.all(
+          color: isCurrent ? scheme.primary : Colors.transparent,
+          width: 2,
+        ),
+        boxShadow: isCurrent
+            ? [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.45),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -53,6 +70,7 @@ class OpponentSeat extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

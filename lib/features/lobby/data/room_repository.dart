@@ -3,9 +3,9 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_config.dart';
 import '../../../core/constants/catalog.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/online_mode.dart';
 import '../../../core/utils/code_gen.dart';
 import '../../../core/utils/failures.dart';
 import '../../game/domain/game_mode.dart';
@@ -163,7 +163,6 @@ class LocalRoomRepository implements RoomRepository {
 }
 
 final roomRepositoryProvider = Provider<RoomRepository>((ref) {
-  if (AppConfig.isOnline) return SupabaseRoomRepository();
-  final repo = LocalRoomRepository();
-  return repo;
+  if (ref.watch(isOnlineProvider)) return SupabaseRoomRepository();
+  return LocalRoomRepository();
 });

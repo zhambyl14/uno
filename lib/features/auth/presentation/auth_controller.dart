@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/catalog.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/online_mode.dart';
 import '../../../core/services/push_service.dart';
 import '../../../core/utils/failures.dart';
 import '../../../core/utils/nickname_filter.dart';
@@ -26,20 +27,30 @@ class AuthController extends AsyncNotifier<PlayerProfile?> {
     await _subscription?.cancel();
     _subscription = repo.authEvents.listen((_) => ref.invalidateSelf());
     ref.onDispose(() => _subscription?.cancel());
-    final profile = await repo.restore() ?? await _autoGuest(repo);
+    final profile = await _restoreOrGuest(repo);
     if (profile != null) {
       unawaited(ref.read(pushServiceProvider).syncToken(profile.id));
     }
     return profile;
   }
 
-  /// Best-effort: if the backend rejects anonymous sign-in (e.g. Anonymous
-  /// auth isn't enabled in the Supabase dashboard yet), fall back to `null`
-  /// rather than throwing — throwing here would leave [build] in
-  /// [AsyncError] forever, which the router treats the same as "still
-  /// loading" and the app would be stuck on the splash screen with no way
-  /// forward. `null` lets Home render (profile-less) and Login stays
-  /// reachable to retry a real sign-in.
+  /// Restore an existing session, else create a guest. Never throws — a
+  /// backend hiccup must not strand the app on the splash screen.
+  Future<PlayerProfile?> _restoreOrGuest(AuthRepository repo) async {
+    try {
+      final restored = await repo.restore();
+      if (restored != null) return restored;
+    } catch (_) {
+      // No usable session — fall through to a guest.
+    }
+    return _autoGuest(repo);
+  }
+
+  /// Creates the automatic guest. If the online backend rejects anonymous
+  /// sign-in (Anonymous auth disabled, or no network), it drops the whole app
+  /// to fully-local mode and retries with the local guest — which always
+  /// succeeds — so the player is never stranded profile-less. The provider
+  /// swap re-runs [build] with the local repositories.
   Future<PlayerProfile?> _autoGuest(AuthRepository repo) async {
     try {
       final rng = Random();
@@ -49,7 +60,17 @@ class AuthController extends AsyncNotifier<PlayerProfile?> {
         avatarId: avatar.id,
         isChild: false,
       );
-    } on AppFailure {
+    } catch (_) {
+      // Defer: a provider can't be mutated during another provider's build.
+      if (ref.read(isOnlineProvider)) {
+        unawaited(
+          Future(() {
+            if (ref.mounted) {
+              ref.read(isOnlineProvider.notifier).forceOffline();
+            }
+          }),
+        );
+      }
       return null;
     }
   }

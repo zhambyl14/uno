@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/utils/ui_feedback.dart';
@@ -13,6 +14,8 @@ import '../../../core/widgets/adaptive_scaffold.dart';
 import '../../../core/widgets/async_view.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../friends/domain/friend.dart';
+import '../../friends/presentation/friends_controller.dart';
 import '../domain/room.dart';
 import 'room_controller.dart';
 
@@ -76,6 +79,13 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
     if (mounted) context.go(Routes.home);
   }
 
+  Future<void> _inviteFriend(Room room) => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => _InviteFriendSheet(roomCode: room.code),
+  );
+
   @override
   Widget build(BuildContext context) {
     ref.listen(roomStreamProvider(widget.code), (_, next) {
@@ -107,6 +117,9 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
               busy: ref.watch(roomControllerProvider),
               onAddBot: () =>
                   ref.read(roomControllerProvider.notifier).addBot(room.code),
+              onInviteFriend: AppConfig.isOnline
+                  ? () => _inviteFriend(room)
+                  : null,
               onStart: () => _start(room),
               myId: me?.id,
             );
@@ -123,6 +136,7 @@ class _RoomBody extends StatelessWidget {
     required this.amHost,
     required this.busy,
     required this.onAddBot,
+    required this.onInviteFriend,
     required this.onStart,
     required this.myId,
   });
@@ -131,6 +145,7 @@ class _RoomBody extends StatelessWidget {
   final bool amHost;
   final bool busy;
   final VoidCallback onAddBot;
+  final VoidCallback? onInviteFriend;
   final VoidCallback onStart;
   final String? myId;
 
@@ -140,6 +155,21 @@ class _RoomBody extends StatelessWidget {
       padding: const EdgeInsets.all(Insets.l),
       children: [
         _RoomCodeCard(code: room.code, isPublic: room.isPublic),
+        const SizedBox(height: Insets.m),
+        if (amHost && onInviteFriend != null) ...[
+          FilledButton.tonalIcon(
+            onPressed: (busy || room.isFull) ? null : onInviteFriend,
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+            label: Text(S.inviteFriend),
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
+          ),
+          const SizedBox(height: Insets.xs),
+          Text(
+            S.inviteFriendSubtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
         const SizedBox(height: Insets.l),
         Row(
           children: [
@@ -290,6 +320,103 @@ class _WaitingHint extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
+    );
+  }
+}
+
+/// Host picks a friend to pull straight into this waiting room.
+class _InviteFriendSheet extends ConsumerWidget {
+  const _InviteFriendSheet({required this.roomCode});
+  final String roomCode;
+
+  Future<void> _invite(
+    BuildContext context,
+    WidgetRef ref,
+    Friend friend,
+  ) async {
+    try {
+      await ref
+          .read(friendsControllerProvider.notifier)
+          .inviteToRoom(friendId: friend.id, roomCode: roomCode);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        context.showSnack(S.inviteSent);
+      }
+    } catch (error) {
+      if (context.mounted) context.showError(error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final friendsAsync = ref.watch(friendsControllerProvider);
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(Insets.m),
+              child: Text(
+                S.inviteFriend,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Flexible(
+              child: friendsAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(Insets.xl),
+                  child: CircularProgressIndicator(),
+                ),
+                error: (_, _) => Padding(
+                  padding: const EdgeInsets.all(Insets.xl),
+                  child: Text(S.networkError),
+                ),
+                data: (friends) => friends.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(Insets.xl),
+                        child: Text(
+                          S.noFriendsToInvite,
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(
+                          Insets.m,
+                          0,
+                          Insets.m,
+                          Insets.l,
+                        ),
+                        itemCount: friends.length,
+                        itemBuilder: (context, index) {
+                          final friend = friends[index];
+                          return Card(
+                            child: ListTile(
+                              leading: AvatarCircle(
+                                avatarId: friend.avatarId,
+                                size: 40,
+                              ),
+                              title: Text(
+                                friend.nickname,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: const Icon(Icons.send_rounded),
+                              onTap: () => _invite(context, ref, friend),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

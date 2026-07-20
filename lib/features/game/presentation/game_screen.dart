@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/haptics.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../shop/domain/shop_item.dart';
 import '../domain/game_action.dart';
@@ -19,6 +20,7 @@ import 'widgets/game_event_fx.dart';
 import 'widgets/opponent_seat.dart';
 import 'widgets/player_hand.dart';
 import 'widgets/quick_chat_bar.dart';
+import 'widgets/turn_direction_indicator.dart';
 import 'widgets/turn_timer.dart';
 import 'widgets/uno_card_view.dart';
 
@@ -33,6 +35,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool _ending = false;
   String? _chat;
   Timer? _chatTimer;
+  String? _lastEventSig;
 
   @override
   void dispose() {
@@ -43,6 +46,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   String? get _localId => ref.read(gameControllerProvider)?.localPlayerId;
 
   void _onState(GameState state) {
+    _maybeHaptic(state);
     if (state.phase == GamePhase.finished && !_ending) {
       _ending = true;
       _chatTimer?.cancel();
@@ -50,6 +54,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         await ref.read(gameControllerProvider.notifier).endAndAward();
         if (mounted) context.go(Routes.results);
       });
+    }
+  }
+
+  /// Fires a tactile pulse the first time each event is seen, but only for
+  /// events the local player takes part in (else bot turns would buzz nonstop).
+  void _maybeHaptic(GameState state) {
+    final event = state.event;
+    if (event == null) return;
+    final sig =
+        '${event.type}:${event.actorId}:${event.targetId}:'
+        '${state.discardPile.length}:${state.drawPile.length}:${state.currentIndex}';
+    if (sig == _lastEventSig) return;
+    _lastEventSig = sig;
+    final id = _localId;
+    if (id != null && (event.actorId == id || event.targetId == id)) {
+      GameHaptics.forEvent(event.type);
     }
   }
 
@@ -297,6 +317,11 @@ class _TopBar extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const Spacer(),
+            TurnDirectionIndicator(
+              direction: state.direction,
+              color: UnoCardView.colorOf(state.activeColor),
+            ),
+            const SizedBox(width: Insets.s),
             ActiveColorDot(color: state.activeColor),
             const SizedBox(width: Insets.m),
             if (seconds != null && state.turnEndsAt != null)
@@ -406,11 +431,28 @@ class _CenterArea extends StatelessWidget {
               ),
               const SizedBox(width: Insets.xl),
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                transitionBuilder: (child, animation) => ScaleTransition(
-                  scale: animation,
-                  child: FadeTransition(opacity: animation, child: child),
-                ),
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  final curved = CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutBack,
+                  );
+                  // A freshly played card "slaps down": over-scales, tilts,
+                  // then settles — so every play reads as a real action.
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 1.3, end: 1).animate(curved),
+                      child: RotationTransition(
+                        turns: Tween<double>(
+                          begin: -0.06,
+                          end: 0,
+                        ).animate(curved),
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
                 child: UnoCardView(
                   key: ValueKey(state.topCard.id),
                   card: state.topCard,

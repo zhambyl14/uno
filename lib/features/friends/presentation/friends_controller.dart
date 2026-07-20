@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/friends_repository.dart';
 import '../domain/friend.dart';
+import '../domain/game_invite.dart';
 
 class FriendsController extends AsyncNotifier<List<Friend>> {
   FriendsRepository get _repo => ref.read(friendsRepositoryProvider);
@@ -22,10 +23,21 @@ class FriendsController extends AsyncNotifier<List<Friend>> {
     state = AsyncData(await _repo.list());
   }
 
-  Future<void> invite(String friendId) => _repo.invite(friendId);
+  Future<void> inviteToRoom({
+    required String friendId,
+    required String roomCode,
+  }) => _repo.inviteToRoom(friendId: friendId, roomCode: roomCode);
+
+  Future<void> consumeInvite(int inviteId) => _repo.consumeInvite(inviteId);
 }
 
 final friendsControllerProvider =
     AsyncNotifierProvider<FriendsController, List<Friend>>(
       FriendsController.new,
     );
+
+/// Live incoming room invites for the signed-in user. Watched app-wide by the
+/// navigation shell so a friend's invite surfaces wherever the player is.
+final incomingInvitesProvider = StreamProvider.autoDispose<List<GameInvite>>(
+  (ref) => ref.watch(friendsRepositoryProvider).watchInvites(),
+);

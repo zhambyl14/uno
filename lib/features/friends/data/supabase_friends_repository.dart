@@ -4,6 +4,7 @@ import '../../../core/constants/strings.dart';
 import '../../../core/utils/code_gen.dart';
 import '../../../core/utils/failures.dart';
 import '../domain/friend.dart';
+import '../domain/game_invite.dart';
 import 'friends_repository.dart';
 
 /// Online friends via the `friendships` table + `profiles` lookup by code.
@@ -11,16 +12,19 @@ import 'friends_repository.dart';
 class SupabaseFriendsRepository implements FriendsRepository {
   SupabaseClient get _db => Supabase.instance.client;
   String get _uid => _db.auth.currentUser!.id;
+  String? get _uidOrNull => _db.auth.currentUser?.id;
 
   @override
   Future<List<Friend>> list() => _guard(() async {
+    final uid = _uidOrNull;
+    if (uid == null) return <Friend>[];
     final rows = await _db
         .from('friendships')
         .select(
           'friend:profiles!friendships_friend_id_fkey('
           'id, nickname, avatar_id, friend_code)',
         )
-        .eq('user_id', _uid);
+        .eq('user_id', uid);
     return [
       for (final row in rows)
         Friend.fromJson(row['friend'] as Map<String, dynamic>),
@@ -75,10 +79,38 @@ class SupabaseFriendsRepository implements FriendsRepository {
   });
 
   @override
-  Future<void> invite(String friendId) => _guard(() async {
-    // A row here triggers the friend's "invite" push (Edge Function).
-    await _db.from('invites').insert({'from_id': _uid, 'to_id': friendId});
+  Future<void> inviteToRoom({
+    required String friendId,
+    required String roomCode,
+  }) => _guard(() async {
+    // The row both drives the recipient's realtime in-app banner and the
+    // friend "invite" push (send-push Edge Function).
+    await _db.from('invites').insert({
+      'from_id': _uid,
+      'to_id': friendId,
+      'room_code': roomCode,
+    });
   });
+
+  @override
+  Stream<List<GameInvite>> watchInvites() {
+    final uid = _uidOrNull;
+    if (uid == null) return Stream.value(const <GameInvite>[]);
+    return _db
+        .from('invites')
+        .stream(primaryKey: ['id'])
+        .eq('to_id', uid)
+        .map(
+          (rows) => [
+            for (final row in rows)
+              if (row['room_code'] != null) GameInvite.fromJson(row),
+          ],
+        );
+  }
+
+  @override
+  Future<void> consumeInvite(int inviteId) =>
+      _guard(() async => _db.from('invites').delete().eq('id', inviteId));
 
   Future<T> _guard<T>(Future<T> Function() action) async {
     try {

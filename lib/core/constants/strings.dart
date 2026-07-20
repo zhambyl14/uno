@@ -414,6 +414,33 @@ abstract final class S {
     ru: 'Приглашение отправлено!',
     en: 'Invite sent!',
   );
+  static String get inviteFriend =>
+      _v(kk: 'Досты шақыру', ru: 'Пригласить друга', en: 'Invite a friend');
+  static String get inviteFriendSubtitle => _v(
+    kk: 'Досың тікелей осы бөлмеге кіреді',
+    ru: 'Друг зайдёт прямо в эту комнату',
+    en: 'Your friend joins this room directly',
+  );
+  static String get noFriendsToInvite => _v(
+    kk: 'Әзірге шақыратын дос жоқ. Алдымен дос қос!',
+    ru: 'Пока некого приглашать. Сначала добавь друга!',
+    en: 'No friends to invite yet. Add a friend first!',
+  );
+  static String get inviteReceivedTitle => _v(
+    kk: 'Ойынға шақыру! 🎉',
+    ru: 'Приглашение в игру! 🎉',
+    en: 'Game invite! 🎉',
+  );
+  static String inviteReceivedBody(String name) => _v(
+    kk: '$name сені ойынға шақырды',
+    ru: '$name приглашает тебя в игру',
+    en: '$name invited you to play',
+  );
+  static String get inviteReceivedGeneric => _v(
+    kk: 'Досың сені ойынға шақырды',
+    ru: 'Друг приглашает тебя в игру',
+    en: 'A friend invited you to play',
+  );
   static String get removeFriend =>
       _v(kk: 'Достан шығару', ru: 'Удалить из друзей', en: 'Remove friend');
   static String removeFriendConfirm(String name) => _v(
@@ -793,4 +820,71 @@ UNO FAMILY is a safe online card game for children and families.
 7. Questions: support@unofamily.app
 ''',
   );
+
+  // Mini-games (Home "Other games" section)
+  static String get otherGames =>
+      _v(kk: 'Басқа ойындар', ru: 'Другие игры', en: 'Other games');
+  static String get memoryTitle =>
+      _v(kk: 'Есте сақтау', ru: 'Память', en: 'Memory');
+  static String get memoryDesc => _v(
+    kk: 'Жұп карталарды тауып, есте сақта',
+    ru: 'Находи пары карт и запоминай',
+    en: 'Find the matching pairs',
+  );
+  static String get snapTitle => _v(kk: 'Тап!', ru: 'Хвать!', en: 'Snap!');
+  static String get snapDesc => _v(
+    kk: 'Бірдей карта шықса — бірінші бас!',
+    ru: 'Одинаковые карты — жми первым!',
+    en: 'Matching cards? Tap first!',
+  );
+  static String get crazy8sTitle =>
+      _v(kk: 'Ако (8-лер)', ru: 'Восьмёрки', en: 'Crazy 8s');
+  static String get crazy8sDesc => _v(
+    kk: 'Түсі не саны сай карта таста, 8 — джокер',
+    ru: 'Клади по масти или числу, 8 — джокер',
+    en: 'Match suit or rank; 8s are wild',
+  );
+
+  // Memory game
+  static String get moves => _v(kk: 'Жүріс', ru: 'Ходы', en: 'Moves');
+  static String memoryWon(int moves) => _v(
+    kk: '$moves жүрісте бітірдің! 🎉',
+    ru: 'Готово за $moves ходов! 🎉',
+    en: 'Done in $moves moves! 🎉',
+  );
+  static String get difficulty =>
+      _v(kk: 'Деңгей', ru: 'Уровень', en: 'Difficulty');
+  static String get easy => _v(kk: 'Оңай', ru: 'Легко', en: 'Easy');
+  static String get medium => _v(kk: 'Орташа', ru: 'Средне', en: 'Medium');
+  static String get hard => _v(kk: 'Қиын', ru: 'Сложно', en: 'Hard');
+
+  // Snap game
+  static String get snapButton => _v(kk: 'ТАП!', ru: 'ХВАТЬ!', en: 'SNAP!');
+  static String get snapYourPile =>
+      _v(kk: 'Сенің дестең', ru: 'Твоя стопка', en: 'Your pile');
+  static String get snapBotPile =>
+      _v(kk: 'Бот дестесі', ru: 'Стопка бота', en: 'Bot pile');
+  static String get snapTooSoon =>
+      _v(kk: 'Әлі емес!', ru: 'Рано!', en: 'Too soon!');
+  static String get snapBotWon =>
+      _v(kk: 'Бот бірінші болды', ru: 'Бот успел первым', en: 'Bot snapped first');
+  static String get snapYouWon =>
+      _v(kk: 'Дестені алдың!', ru: 'Стопка твоя!', en: 'You took the pile!');
+  static String get snapTapWhenMatch => _v(
+    kk: 'Екі бірдей карта шықса — ТАП баса ғой',
+    ru: 'Две одинаковые карты — жми ХВАТЬ',
+    en: 'Two matching cards? Hit SNAP',
+  );
+  static String get youWon => _v(kk: 'Сен жеңдің! 🏆', ru: 'Ты выиграл! 🏆', en: 'You won! 🏆');
+  static String get botWon =>
+      _v(kk: 'Бот жеңді', ru: 'Бот выиграл', en: 'Bot won');
+
+  // Crazy 8s
+  static String get yourTurnShort =>
+      _v(kk: 'Сенің кезегің', ru: 'Твой ход', en: 'Your turn');
+  static String get botThinking =>
+      _v(kk: 'Бот ойлануда…', ru: 'Бот думает…', en: 'Bot is thinking…');
+  static String get drawCard => _v(kk: 'Карта ал', ru: 'Взять карту', en: 'Draw');
+  static String get chooseSuit =>
+      _v(kk: 'Масть таңда', ru: 'Выбери масть', en: 'Choose a suit');
 }

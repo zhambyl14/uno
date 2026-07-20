@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/routes.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/utils/code_gen.dart';
@@ -10,6 +15,8 @@ import '../../../core/widgets/async_view.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/status_views.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../game/domain/game_mode.dart';
+import '../../lobby/presentation/lobby_controller.dart';
 import '../../profile/presentation/widgets/friend_code_card.dart';
 import '../domain/friend.dart';
 import 'friends_controller.dart';
@@ -26,6 +33,28 @@ class FriendsScreen extends ConsumerWidget {
     try {
       await ref.read(friendsControllerProvider.notifier).addByCode(code);
       if (context.mounted) context.showSnack(S.friendAdded);
+    } catch (error) {
+      if (context.mounted) context.showError(error);
+    }
+  }
+
+  /// Invites a friend to play: spins up a private room, drops the invite into
+  /// it, and takes the host to the waiting room to greet them.
+  Future<void> _invite(BuildContext context, WidgetRef ref, Friend friend) async {
+    if (!AppConfig.isOnline) {
+      context.showSnack(S.onlineOnlyBody);
+      return;
+    }
+    try {
+      final room = await ref
+          .read(lobbyControllerProvider.notifier)
+          .createRoom(isPublic: false, mode: GameMode.classic);
+      await ref
+          .read(friendsControllerProvider.notifier)
+          .inviteToRoom(friendId: friend.id, roomCode: room.code);
+      if (!context.mounted) return;
+      context.showSnack(S.inviteSent);
+      unawaited(context.push(Routes.roomPath(room.code)));
     } catch (error) {
       if (context.mounted) context.showError(error);
     }
@@ -76,12 +105,7 @@ class FriendsScreen extends ConsumerWidget {
                   itemCount: friends.length,
                   itemBuilder: (context, index) => _FriendTile(
                     friend: friends[index],
-                    onInvite: () async {
-                      await ref
-                          .read(friendsControllerProvider.notifier)
-                          .invite(friends[index].id);
-                      if (context.mounted) context.showSnack(S.inviteSent);
-                    },
+                    onInvite: () => _invite(context, ref, friends[index]),
                     onRemove: () =>
                         _confirmRemove(context, ref, friends[index]),
                   ),
