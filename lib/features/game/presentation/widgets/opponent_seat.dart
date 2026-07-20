@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/insets.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../domain/game_state.dart';
+import 'turn_ring.dart';
 
 /// Compact opponent display: avatar, name, card count, turn highlight.
 class OpponentSeat extends StatelessWidget {
@@ -10,10 +11,17 @@ class OpponentSeat extends StatelessWidget {
     super.key,
     required this.player,
     required this.isCurrent,
+    this.turnEndsAt,
+    this.turnSeconds,
   });
 
   final GamePlayer player;
   final bool isCurrent;
+
+  /// Turn deadline/duration for the countdown ring; null when the mode has
+  /// no timer (Family) — the ring then shows as a solid glow instead.
+  final DateTime? turnEndsAt;
+  final int? turnSeconds;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +56,13 @@ class OpponentSeat extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                AvatarCircle(avatarId: player.avatarId, size: 46),
+                TurnRing(
+                  active: isCurrent,
+                  endsAt: turnEndsAt,
+                  totalSeconds: turnSeconds,
+                  size: 54,
+                  child: AvatarCircle(avatarId: player.avatarId, size: 46),
+                ),
                 Positioned(
                   right: -6,
                   bottom: -6,

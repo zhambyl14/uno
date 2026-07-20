@@ -226,12 +226,12 @@ class _PlayHero extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [GamePalette.blue, GamePalette.wild],
+          colors: GamePalette.brandGradient,
         ),
         borderRadius: BorderRadius.circular(Corners.l),
         boxShadow: [
           BoxShadow(
-            color: GamePalette.blue.withValues(alpha: 0.35),
+            color: GamePalette.brandEnd.withValues(alpha: 0.35),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -262,7 +262,7 @@ class _PlayHero extends StatelessWidget {
               onPressed: onPlay,
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: GamePalette.wild,
+                foregroundColor: GamePalette.brandStart,
                 textStyle: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,

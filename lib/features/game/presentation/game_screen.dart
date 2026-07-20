@@ -273,6 +273,8 @@ class _GameBoard extends StatelessWidget {
                   _OpponentsRow(
                     opponents: opponents,
                     currentId: state.currentPlayer.id,
+                    turnEndsAt: state.turnEndsAt,
+                    turnSeconds: state.mode.turnSeconds,
                   ),
                   Expanded(
                     child: _CenterArea(
@@ -369,9 +371,16 @@ class _TopBar extends StatelessWidget {
 }
 
 class _OpponentsRow extends StatelessWidget {
-  const _OpponentsRow({required this.opponents, required this.currentId});
+  const _OpponentsRow({
+    required this.opponents,
+    required this.currentId,
+    this.turnEndsAt,
+    this.turnSeconds,
+  });
   final List<GamePlayer> opponents;
   final String currentId;
+  final DateTime? turnEndsAt;
+  final int? turnSeconds;
 
   @override
   Widget build(BuildContext context) {
@@ -386,9 +395,12 @@ class _OpponentsRow extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: Insets.s),
         itemBuilder: (context, index) {
           final player = opponents[index];
+          final isCurrent = player.id == currentId;
           return OpponentSeat(
             player: player,
-            isCurrent: player.id == currentId,
+            isCurrent: isCurrent,
+            turnEndsAt: isCurrent ? turnEndsAt : null,
+            turnSeconds: turnSeconds,
           );
         },
       ),

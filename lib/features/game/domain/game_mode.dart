@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../../core/constants/strings.dart';
 
 enum GameMode {
@@ -59,5 +61,14 @@ enum GameMode {
     GameMode.family => S.modeFamilyDesc,
     GameMode.fast => S.modeFastDesc,
     GameMode.team => S.modeTeamDesc,
+  };
+
+  /// Redesign v2: each mode gets its own saturated identity color instead of
+  /// a flat neutral card, so the mode picker reads at a glance.
+  List<Color> get gradientColors => switch (this) {
+    GameMode.classic => const [Color(0xFF8B3FF0), Color(0xFFEC4899)],
+    GameMode.family => const [Color(0xFF2DD4BF), Color(0xFF0F766E)],
+    GameMode.fast => const [Color(0xFFFB923C), Color(0xFFC2410C)],
+    GameMode.team => const [Color(0xFFEC4899), Color(0xFF9D174D)],
   };
 }

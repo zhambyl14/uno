@@ -19,12 +19,10 @@ class ModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
+    final colors = mode.gradientColors;
     return Material(
-      color: selected
-          ? scheme.primaryContainer
-          : scheme.surfaceContainerHighest,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(Corners.l),
       child: InkWell(
         borderRadius: BorderRadius.circular(Corners.l),
@@ -32,14 +30,26 @@ class ModeCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(Insets.m),
           decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: colors,
+            ),
             borderRadius: BorderRadius.circular(Corners.l),
             border: Border.all(
-              color: selected ? scheme.primary : Colors.transparent,
+              color: selected ? Colors.white : Colors.transparent,
               width: 2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.last.withValues(alpha: 0.4),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Opacity(
-            opacity: locked ? 0.55 : 1,
+            opacity: locked ? 0.6 : 1,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -52,14 +62,29 @@ class ModeCard extends StatelessWidget {
                       child: Text(
                         mode.label,
                         style: theme.textTheme.titleMedium!.copyWith(
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     if (locked)
-                      Icon(Icons.lock_rounded, size: 18, color: scheme.outline)
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.28),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.lock_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      )
                     else if (selected)
-                      Icon(Icons.check_circle_rounded, color: scheme.primary),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.white,
+                      ),
                   ],
                 ),
                 const SizedBox(height: Insets.xs),
@@ -69,9 +94,7 @@ class ModeCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall!.copyWith(
-                      color: selected
-                          ? scheme.onPrimaryContainer
-                          : scheme.onSurfaceVariant,
+                      color: Colors.white.withValues(alpha: 0.85),
                     ),
                   ),
                 ),
