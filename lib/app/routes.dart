@@ -16,7 +16,6 @@ abstract final class Routes {
   static const leaderboard = '/leaderboard';
   static const memory = '/memory';
   static const snap = '/snap';
-  static const crazy8s = '/crazy8s';
 
   static String roomPath(String code) => '/room/$code';
 }

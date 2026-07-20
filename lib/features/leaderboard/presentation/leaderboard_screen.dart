@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/routes.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/constants/game_palette.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/utils/failures.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
 import '../../../core/widgets/async_view.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -42,6 +45,21 @@ class _OnlineLeaderboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final entries = ref.watch(leaderboardControllerProvider);
+    final error = entries.error;
+    if (error is OfflineFailure) {
+      // A guest whose silent anonymous sign-in didn't go through — a plain
+      // network error would look broken; offer the actual fix instead.
+      return EmptyView(
+        emoji: '🔒',
+        title: S.guestGateTitle,
+        hint: error.message,
+        action: FilledButton.icon(
+          onPressed: () => context.push(Routes.login),
+          icon: const Icon(Icons.login_rounded),
+          label: Text(S.signInNow),
+        ),
+      );
+    }
     return AsyncView<List<LeaderboardEntry>>(
       value: entries,
       onRetry: () => ref.invalidate(leaderboardControllerProvider),
@@ -49,7 +67,9 @@ class _OnlineLeaderboard extends ConsumerWidget {
       empty: EmptyView(emoji: '🏆', title: S.leaderboardEmpty),
       data: (list) {
         final hasPodium = list.length >= 3;
-        final podium = hasPodium ? list.sublist(0, 3) : const <LeaderboardEntry>[];
+        final podium = hasPodium
+            ? list.sublist(0, 3)
+            : const <LeaderboardEntry>[];
         final rest = hasPodium ? list.sublist(3) : list;
         return Column(
           children: [

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -270,15 +271,10 @@ class _GameBoard extends StatelessWidget {
                 children: [
                   _TopBar(state: state, onLeave: onLeave),
                   const SizedBox(height: Insets.s),
-                  _OpponentsRow(
-                    opponents: opponents,
-                    currentId: state.currentPlayer.id,
-                    turnEndsAt: state.turnEndsAt,
-                    turnSeconds: state.mode.turnSeconds,
-                  ),
                   Expanded(
-                    child: _CenterArea(
+                    child: _RoundTable(
                       state: state,
+                      opponents: opponents,
                       myTurn: myTurn,
                       chat: chat,
                       tableTheme: tableTheme,
@@ -370,54 +366,24 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _OpponentsRow extends StatelessWidget {
-  const _OpponentsRow({
-    required this.opponents,
-    required this.currentId,
-    this.turnEndsAt,
-    this.turnSeconds,
-  });
-  final List<GamePlayer> opponents;
-  final String currentId;
-  final DateTime? turnEndsAt;
-  final int? turnSeconds;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 92,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        shrinkWrap: true,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: Insets.m),
-        itemCount: opponents.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Insets.s),
-        itemBuilder: (context, index) {
-          final player = opponents[index];
-          final isCurrent = player.id == currentId;
-          return OpponentSeat(
-            player: player,
-            isCurrent: isCurrent,
-            turnEndsAt: isCurrent ? turnEndsAt : null,
-            turnSeconds: turnSeconds,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CenterArea extends StatelessWidget {
-  const _CenterArea({
+/// A round table: opponents sit spaced around the upper arc of an oval,
+/// the discard/draw piles sit at its center, and a comet-like ring
+/// continuously travels around the table's edge in the direction of play —
+/// so "whose turn, which way" reads as one continuous picture instead of a
+/// flat row of avatars stacked above a separate card area.
+class _RoundTable extends StatefulWidget {
+  const _RoundTable({
     required this.state,
+    required this.opponents,
     required this.myTurn,
     required this.chat,
     required this.tableTheme,
     required this.cardBack,
     required this.onDraw,
   });
+
   final GameState state;
+  final List<GamePlayer> opponents;
   final bool myTurn;
   final String? chat;
   final TableTheme tableTheme;
@@ -425,107 +391,227 @@ class _CenterArea extends StatelessWidget {
   final VoidCallback onDraw;
 
   @override
+  State<_RoundTable> createState() => _RoundTableState();
+}
+
+class _RoundTableState extends State<_RoundTable>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 5),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final banner =
         describeEvent(state) ??
-        (myTurn ? S.yourTurn : S.turnOf(state.currentPlayer.name));
-    final canDraw = myTurn && state.drawnCardId == null;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        chat != null
-            ? SizedBox(height: 42, child: ChatBubble(text: chat!))
-            : GameEventBanner(
-                message: banner,
-                event: state.event,
-                isMyTurn: myTurn,
+        (widget.myTurn ? S.yourTurn : S.turnOf(state.currentPlayer.name));
+    final canDraw = widget.myTurn && state.drawnCardId == null;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // The oval table surface.
+            Container(
+              margin: const EdgeInsets.symmetric(
+                horizontal: Insets.l,
+                vertical: Insets.m,
               ),
-        const SizedBox(height: Insets.s),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          margin: const EdgeInsets.symmetric(horizontal: Insets.l),
-          padding: const EdgeInsets.symmetric(
-            horizontal: Insets.xl,
-            vertical: Insets.l,
-          ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [tableTheme.top, tableTheme.bottom],
-            ),
-            borderRadius: BorderRadius.circular(Corners.l),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-            boxShadow: [
-              BoxShadow(
-                color: (myTurn ? tableTheme.top : Colors.black).withValues(
-                  alpha: myTurn ? 0.38 : 0.18,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.2),
+                  radius: 1.1,
+                  colors: [
+                    widget.tableTheme.top.withValues(alpha: 0.96),
+                    widget.tableTheme.bottom,
+                  ],
                 ),
-                blurRadius: myTurn ? 26 : 12,
-                spreadRadius: myTurn ? 1 : 0,
+                borderRadius: BorderRadius.all(Radius.elliptical(w / 2, h / 2)),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.28),
+                  width: 2,
+                ),
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _DrawPile(
-                count: state.drawPile.length,
-                enabled: canDraw,
-                cardBack: cardBack,
-                onTap: onDraw,
+            ),
+            // The rotating direction ring, traced along the table's own edge.
+            AnimatedBuilder(
+              animation: _spin,
+              builder: (_, _) => CustomPaint(
+                size: Size(w, h),
+                painter: _DirectionRingPainter(
+                  progress: _spin.value,
+                  clockwise: state.direction >= 0,
+                  color: UnoCardView.colorOf(state.activeColor),
+                ),
               ),
-              const SizedBox(width: Insets.xl),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) {
-                  final curved = CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutBack,
-                  );
-                  // A freshly played card "slaps down": over-scales, tilts,
-                  // then settles — so every play reads as a real action.
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 1.3, end: 1).animate(curved),
-                      child: RotationTransition(
-                        turns: Tween<double>(
-                          begin: -0.06,
-                          end: 0,
-                        ).animate(curved),
-                        child: child,
+            ),
+            // Opponents, seated around the table's upper arc.
+            for (var i = 0; i < widget.opponents.length; i++)
+              _seatAt(w, h, widget.opponents.length, i, widget.opponents[i]),
+            // Center: banner + draw/discard piles.
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                widget.chat != null
+                    ? SizedBox(
+                        height: 42,
+                        child: ChatBubble(text: widget.chat!),
+                      )
+                    : GameEventBanner(
+                        message: banner,
+                        event: state.event,
+                        isMyTurn: widget.myTurn,
+                      ),
+                const SizedBox(height: Insets.s),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _DrawPile(
+                      count: state.drawPile.length,
+                      enabled: canDraw,
+                      cardBack: widget.cardBack,
+                      onTap: widget.onDraw,
+                    ),
+                    const SizedBox(width: Insets.xl),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) {
+                        final curved = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutBack,
+                        );
+                        // A freshly played card "slaps down": over-scales,
+                        // tilts, then settles — every play reads as an action.
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(
+                              begin: 1.3,
+                              end: 1,
+                            ).animate(curved),
+                            child: RotationTransition(
+                              turns: Tween<double>(
+                                begin: -0.06,
+                                end: 0,
+                              ).animate(curved),
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                      child: UnoCardView(
+                        key: ValueKey(state.topCard.id),
+                        card: state.topCard,
+                        width: 84,
                       ),
                     ),
-                  );
-                },
-                child: UnoCardView(
-                  key: ValueKey(state.topCard.id),
-                  card: state.topCard,
-                  width: 84,
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: Insets.m),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: state.drawnCardId != null && myTurn
-              ? Text(
-                  S.drawnCardHint,
-                  key: const ValueKey('drawn-hint'),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                )
-              : const SizedBox(key: ValueKey('empty-hint')),
-        ),
-      ],
+                const SizedBox(height: Insets.m),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: state.drawnCardId != null && widget.myTurn
+                      ? Text(
+                          S.drawnCardHint,
+                          key: const ValueKey('drawn-hint'),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        )
+                      : const SizedBox(key: ValueKey('empty-hint')),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
+
+  /// Places opponent [index] of [count] along the table's upper arc (200°
+  /// to 340°, i.e. avoiding the bottom where the local player's own hand
+  /// already sits) — the "sitting around a round table" arrangement.
+  Widget _seatAt(double w, double h, int count, int index, GamePlayer player) {
+    const startDeg = 200.0;
+    const endDeg = 340.0;
+    final t = count <= 1 ? 0.5 : index / (count - 1);
+    final rad = (startDeg + (endDeg - startDeg) * t) * math.pi / 180;
+    final rx = w / 2 * 0.88;
+    final ry = h / 2 * 0.8;
+    final cx = w / 2 + rx * math.cos(rad);
+    final cy = h / 2 + ry * math.sin(rad);
+    final isCurrent = player.id == widget.state.currentPlayer.id;
+    return Positioned(
+      left: cx,
+      top: cy,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, -0.5),
+        child: OpponentSeat(
+          player: player,
+          isCurrent: isCurrent,
+          turnEndsAt: isCurrent ? widget.state.turnEndsAt : null,
+          turnSeconds: widget.state.mode.turnSeconds,
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints a comet-like arc that continuously travels around the table's
+/// elliptical edge, in the direction play is currently flowing.
+class _DirectionRingPainter extends CustomPainter {
+  const _DirectionRingPainter({
+    required this.progress,
+    required this.clockwise,
+    required this.color,
+  });
+
+  /// 0..1, looping.
+  final double progress;
+  final bool clockwise;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(3, 3, size.width - 6, size.height - 6);
+    final angle = (clockwise ? 1 : -1) * progress * 2 * math.pi;
+    final gradient = SweepGradient(
+      colors: [
+        color.withValues(alpha: 0),
+        color.withValues(alpha: 0),
+        color.withValues(alpha: 0.95),
+        color.withValues(alpha: 0),
+      ],
+      stops: const [0.0, 0.72, 0.9, 1.0],
+      transform: GradientRotation(angle),
+    );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round
+      ..shader = gradient.createShader(rect);
+    canvas.drawArc(rect, 0, 2 * math.pi, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DirectionRingPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.clockwise != clockwise ||
+      oldDelegate.color != color;
 }
 
 class _DrawPile extends StatelessWidget {

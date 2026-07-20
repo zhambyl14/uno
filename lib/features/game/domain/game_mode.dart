@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/strings.dart';
 
 enum GameMode {
+  // Standard 108-card UNO deck (number/skip/reverse/draw-two/wild/wild-draw-
+  // four) in every mode — no novelty cards. Only the pace/hand size/timer
+  // differ between modes.
   classic(
     label: S.modeClassic,
     emoji: '🎴',
     handSize: 7,
     turnSeconds: 30,
-    withSpecials: true,
+    withSpecials: false,
     isTeam: false,
   ),
   family(
@@ -24,7 +27,7 @@ enum GameMode {
     emoji: '⚡',
     handSize: 5,
     turnSeconds: 15,
-    withSpecials: true,
+    withSpecials: false,
     isTeam: false,
   ),
   team(
@@ -32,7 +35,7 @@ enum GameMode {
     emoji: '🤝',
     handSize: 7,
     turnSeconds: 30,
-    withSpecials: true,
+    withSpecials: false,
     isTeam: true,
   );
 

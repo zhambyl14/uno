@@ -49,7 +49,8 @@ lib/
 ## Game engine (pure Dart, `features/game/domain`)
 
 Deterministic reducer: `GameEngine.apply(state, action) -> state`. Fully unit-tested.
-- Deck: standard 108 + safe specials (⭐ Star = extra turn, 🎁 Gift = pass a card, 🔄 Shuffle = shuffle-hands, 🌈 Rainbow = table accepts any color for one turn). No aggressive cards.
+- Deck: standard 108-card UNO in every mode (number/skip/reverse/draw-two/wild/wild-draw-four) — official rules, no novelty cards. No aggressive cards.
+- The engine still supports four safe novelty types (⭐ Star/🎁 Gift/🔀 Shuffle/🌈 Rainbow, see `uno_card.dart`/`game_engine.dart`) but no `GameMode` currently deals them (`withSpecials: false` everywhere) — kept for a possible future "fun deck" toggle.
 - Modes: Classic (30s timer), Family (standard deck, no timer), Fast (5 cards, 15s), Team 2v2.
 - UNO button: at 2 cards; forgot → auto +2 penalty. Timeout → auto draw + pass. No stacking (child-simple).
 - `GameSession` interface: `LocalGameSession` (bots) / `RemoteGameSession` (Supabase Realtime broadcast, host-authoritative).

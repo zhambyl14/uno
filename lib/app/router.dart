@@ -18,7 +18,6 @@ import '../features/home/presentation/home_screen.dart';
 import '../features/leaderboard/presentation/leaderboard_screen.dart';
 import '../features/lobby/presentation/lobby_screen.dart';
 import '../features/lobby/presentation/room_screen.dart';
-import '../features/minigames/crazy8s/presentation/crazy8s_screen.dart';
 import '../features/minigames/memory/memory_screen.dart';
 import '../features/minigames/snap/snap_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
@@ -136,11 +135,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.snap,
         parentNavigatorKey: _rootKey,
         builder: (_, _) => const SnapScreen(),
-      ),
-      GoRoute(
-        path: Routes.crazy8s,
-        parentNavigatorKey: _rootKey,
-        builder: (_, _) => const Crazy8sScreen(),
       ),
     ],
   );

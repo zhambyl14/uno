@@ -79,8 +79,8 @@ void main() {
         expect(p.hand.length, GameMode.classic.handSize);
       }
       expect(game.topCard.type, CardType.number);
-      // 124 special deck - 3*7 dealt - 1 on discard.
-      expect(game.drawPile.length, 124 - 21 - 1);
+      // 108 standard deck - 3*7 dealt - 1 on discard.
+      expect(game.drawPile.length, 108 - 21 - 1);
     });
 
     test('team mode assigns alternating teams', () {

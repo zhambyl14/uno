@@ -17,6 +17,12 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
 
   @override
   Future<List<LeaderboardEntry>> top({int limit = 50}) async {
+    // A guest whose silent anonymous sign-in failed (no backend session) has
+    // no `authenticated` role for RLS — querying would just surface a
+    // confusing permission error. Fail with a typed, actionable state instead.
+    if (_client.auth.currentUser == null) {
+      throw OfflineFailure(S.leaderboardSignInBody);
+    }
     try {
       final rows = await _client
           .from('profiles')

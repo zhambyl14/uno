@@ -214,6 +214,11 @@ abstract final class S {
   static String get playNow => _v(kk: 'Ойнау', ru: 'Играть', en: 'Play');
   static String get quickPlay =>
       _v(kk: 'Жылдам ойын', ru: 'Быстрая игра', en: 'Quick play');
+  static String get playWithAnyone => _v(
+    kk: 'Кез келген ойыншымен ойнау',
+    ru: 'Играть со случайным игроком',
+    en: 'Play with anyone online',
+  );
   static String get playWithFriends => _v(
     kk: 'Достармен ойнау',
     ru: 'Играть с друзьями',
@@ -223,9 +228,9 @@ abstract final class S {
       _v(kk: 'Режим таңда', ru: 'Выбери режим', en: 'Choose a mode');
   static const modeClassic = 'Classic';
   static String get modeClassicDesc => _v(
-    kk: 'Кәдімгі UNO + қауіпсіз арнайы карталар',
-    ru: 'Классический UNO + безопасные спецкарты',
-    en: 'Classic UNO + safe special cards',
+    kk: 'Кәдімгі, ресми UNO ережесі бойынша',
+    ru: 'По официальным правилам классического UNO',
+    en: 'By the official classic UNO rules',
   );
   static const modeFamily = 'Family';
   static String get modeFamilyDesc => _v(
@@ -314,6 +319,11 @@ abstract final class S {
     kk: 'Әзірге ешкім ойнаған жоқ',
     ru: 'Пока никто не играл',
     en: 'No one has played yet',
+  );
+  static String get leaderboardSignInBody => _v(
+    kk: 'Әлемдік рейтингте орын алу үшін тіркеліп немесе кіру керек.',
+    ru: 'Чтобы попасть в мировой рейтинг, нужно зарегистрироваться или войти.',
+    en: 'Sign in or register to appear on the world leaderboard.',
   );
   static String get leaderboardYou => _v(kk: 'Сен', ru: 'Ты', en: 'You');
   static List<String> get monthNames => _v(
@@ -827,9 +837,9 @@ UNO FAMILY is a safe online card game for children and families.
   static String get memoryTitle =>
       _v(kk: 'Есте сақтау', ru: 'Память', en: 'Memory');
   static String get memoryDesc => _v(
-    kk: 'Жұп карталарды тауып, есте сақта',
-    ru: 'Находи пары карт и запоминай',
-    en: 'Find the matching pairs',
+    kk: 'Досыңмен кезектесіп ойна — бір телефонда',
+    ru: 'Играй с другом по очереди — на одном телефоне',
+    en: 'Play with a friend, taking turns',
   );
   static String get snapTitle => _v(kk: 'Тап!', ru: 'Хвать!', en: 'Snap!');
   static String get snapDesc => _v(
@@ -837,23 +847,23 @@ UNO FAMILY is a safe online card game for children and families.
     ru: 'Одинаковые карты — жми первым!',
     en: 'Matching cards? Tap first!',
   );
-  static String get crazy8sTitle =>
-      _v(kk: 'Ако (8-лер)', ru: 'Восьмёрки', en: 'Crazy 8s');
-  static String get crazy8sDesc => _v(
-    kk: 'Түсі не саны сай карта таста, 8 — джокер',
-    ru: 'Клади по масти или числу, 8 — джокер',
-    en: 'Match suit or rank; 8s are wild',
-  );
 
   // Memory game
   static String get moves => _v(kk: 'Жүріс', ru: 'Ходы', en: 'Moves');
-  static String memoryWon(int moves) => _v(
-    kk: '$moves жүрісте бітірдің! 🎉',
-    ru: 'Готово за $moves ходов! 🎉',
-    en: 'Done in $moves moves! 🎉',
-  );
   static String get difficulty =>
       _v(kk: 'Деңгей', ru: 'Уровень', en: 'Difficulty');
+  static String get player1 =>
+      _v(kk: '1-ойыншы', ru: 'Игрок 1', en: 'Player 1');
+  static String get player2 =>
+      _v(kk: '2-ойыншы', ru: 'Игрок 2', en: 'Player 2');
+  static String memoryTurnOf(String name) =>
+      _v(kk: '$name кезегі', ru: 'Ход: $name', en: "$name's turn");
+  static String memoryWinnerIs(String name) =>
+      _v(kk: '$name жеңді! 🎉', ru: '$name победил! 🎉', en: '$name wins! 🎉');
+  static String get memoryDraw =>
+      _v(kk: 'Тең түсті!', ru: 'Ничья!', en: "It's a draw!");
+  static String pairsLabel(int count) =>
+      _v(kk: '$count жұп', ru: '$count пар', en: '$count pairs');
   static String get easy => _v(kk: 'Оңай', ru: 'Легко', en: 'Easy');
   static String get medium => _v(kk: 'Орташа', ru: 'Средне', en: 'Medium');
   static String get hard => _v(kk: 'Қиын', ru: 'Сложно', en: 'Hard');
@@ -883,14 +893,6 @@ UNO FAMILY is a safe online card game for children and families.
   static String get botWon =>
       _v(kk: 'Бот жеңді', ru: 'Бот выиграл', en: 'Bot won');
 
-  // Crazy 8s
-  static String get yourTurnShort =>
-      _v(kk: 'Сенің кезегің', ru: 'Твой ход', en: 'Your turn');
-  static String get botThinking =>
-      _v(kk: 'Бот ойлануда…', ru: 'Бот думает…', en: 'Bot is thinking…');
-  static String get chooseSuit =>
-      _v(kk: 'Масть таңда', ru: 'Выбери масть', en: 'Choose a suit');
-
   // How-to-play tutorial sheets
   static String get howToPlayTitle =>
       _v(kk: 'Қалай ойнау керек?', ru: 'Как играть?', en: 'How to play');
@@ -903,7 +905,7 @@ UNO FAMILY is a safe online card game for children and families.
       '🃏 Сәйкес карта жоқ болса — 1 карта ал',
       '✋ Қолыңда 1 карта қалғанда «UNO!» деп бас — ұмытсаң +2 карта айыппұл аласың',
       '🚫🔄 Өткізіп жіберу мен бағыт ауыстыру, +2/+4 — қарсыласыңа карта алдырады',
-      '⭐🎁🔀🌈 Star — қосымша жүріс, Gift — сыйлық, Shuffle — араластыру, Rainbow — кез келген түс',
+      '🎨 Wild — кез келген түсті таңдай аласың, Wild +4 — түс таңдап, 4 карта алдыртады',
       '🏆 Бірінші болып қолыңдағы барлық картаны таусқан ойыншы жеңеді!',
     ],
     AppLocale.ru => [
@@ -911,7 +913,7 @@ UNO FAMILY is a safe online card game for children and families.
       '🃏 Нет подходящей карты — возьми 1 карту',
       '✋ Осталась 1 карта — жми «UNO!», забудешь — штраф +2 карты',
       '🚫🔄 Пропуск хода и смена направления, +2/+4 — заставляют соперника брать карты',
-      '⭐🎁🔀🌈 Star — доп. ход, Gift — подарок, Shuffle — перемешать, Rainbow — любой цвет',
+      '🎨 Wild — выбираешь любой цвет, Wild +4 — выбираешь цвет и заставляешь взять 4 карты',
       '🏆 Первый, кто избавится от всех карт — побеждает!',
     ],
     AppLocale.en => [
@@ -919,29 +921,32 @@ UNO FAMILY is a safe online card game for children and families.
       "🃏 No matching card? Draw one",
       '✋ Down to 1 card? Tap "UNO!" — forget and you get a +2 penalty',
       '🚫🔄 Skip and Reverse, +2/+4 make an opponent draw cards',
-      '⭐🎁🔀🌈 Star = extra turn, Gift = give a card, Shuffle = re-deal hands, Rainbow = any color',
+      '🎨 Wild lets you pick any color; Wild +4 picks a color and makes an opponent draw 4',
       '🏆 First to play all their cards wins!',
     ],
   };
 
   static List<String> get memoryRules => switch (locale) {
     AppLocale.kk => [
-      '🧠 Екі бірдей картаны тауып жұп жаса',
-      '👆 Бір уақытта тек 2 карта ашық тұра алады',
-      '✅ Жұп болса — карталар ашық қалады, болмаса жабылады',
-      '🏆 Барлық жұпты азырақ жүріспен тапсаң — жақсы нәтиже!',
+      '🧑‍🤝‍🧑 Досыңмен бір телефонда кезектесіп ойна — қолды бір-біріне бересіңдер',
+      '🧠 Кезегіңде екі бірдей картаны тауып жұп жаса',
+      '✅ Жұп тапсаң — кезек сенде қалады, тағы аш!',
+      '❌ Жұп болмаса — кезек досыңа өтеді',
+      '🏆 Ең көп жұп тапқан ойыншы жеңеді',
     ],
     AppLocale.ru => [
-      '🧠 Находи две одинаковые карты и составляй пары',
-      '👆 Одновременно открыты не более 2 карт',
-      '✅ Пара совпала — карты остаются открытыми, нет — закрываются',
-      '🏆 Чем меньше ходов, тем лучше результат!',
+      '🧑‍🤝‍🧑 Играйте по очереди на одном телефоне — передавайте друг другу',
+      '🧠 В свой ход находи две одинаковые карты',
+      '✅ Есть пара — ход остаётся у тебя, открывай ещё!',
+      '❌ Нет пары — ход переходит другому',
+      '🏆 Побеждает тот, у кого больше пар',
     ],
     AppLocale.en => [
-      '🧠 Find two matching cards to make a pair',
-      '👆 Only 2 cards can be face-up at once',
-      "✅ Match? Cards stay open. No match? They flip back",
-      '🏆 Fewer moves means a better score!',
+      '🧑‍🤝‍🧑 Play with a friend, taking turns on the same phone',
+      '🧠 On your turn, find two matching cards',
+      '✅ Found a pair? You go again!',
+      '❌ No match? Turn passes to your friend',
+      '🏆 Whoever finds the most pairs wins',
     ],
   };
 
@@ -963,27 +968,6 @@ UNO FAMILY is a safe online card game for children and families.
       '👏 Two cards match by color or number — tap SNAP first',
       "🐢 Too early? You just miss the pile — no penalty",
       '🏆 Whoever collects the most cards wins',
-    ],
-  };
-
-  static List<String> get crazy8sRules => switch (locale) {
-    AppLocale.kk => [
-      '🃏 Кезегіңде үстелдегі картамен түсі не саны бірдей карта таста',
-      '8️⃣ 8 — джокер: кез келген уақытта таста да, жаңа масть таңда',
-      '🎴 Сәйкес карта жоқ болса — карта ал (алған картаңды дереу ойнай аласың)',
-      '🏆 Бірінші болып қолындағы карталарды таусқан жеңеді!',
-    ],
-    AppLocale.ru => [
-      '🃏 В свой ход клади карту, совпадающую по масти или числу',
-      '8️⃣ 8 — джокер: кладётся всегда, после неё выбираешь новую масть',
-      '🎴 Нет подходящей карты — возьми одну (её можно сразу сыграть)',
-      '🏆 Первый, кто избавится от карт — побеждает!',
-    ],
-    AppLocale.en => [
-      '🃏 On your turn, play a card matching suit or rank',
-      '8️⃣ 8s are wild: always playable, then pick the new suit',
-      "🎴 No match? Draw one — you can play it right away",
-      '🏆 First to empty their hand wins!',
     ],
   };
 }

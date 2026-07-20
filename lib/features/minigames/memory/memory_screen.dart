@@ -41,6 +41,10 @@ class _Tile {
   bool matched = false;
 }
 
+/// Memory/Concentration, played the way it's actually meant to be: two
+/// players take turns on the same device (hotseat — pass the phone back and
+/// forth). A match keeps your turn going; a miss hands it to the other
+/// player. Most pairs found wins.
 class MemoryScreen extends ConsumerStatefulWidget {
   const MemoryScreen({super.key});
 
@@ -54,8 +58,10 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
   late List<_Tile> _tiles;
   int? _firstIndex;
   bool _busy = false;
-  int _moves = 0;
-  bool _won = false;
+  bool _turnA = true;
+  int _scoreA = 0;
+  int _scoreB = 0;
+  bool _finished = false;
 
   @override
   void initState() {
@@ -91,15 +97,17 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
     _tiles = tiles;
     _firstIndex = null;
     _busy = false;
-    _moves = 0;
-    _won = false;
+    _turnA = true;
+    _scoreA = 0;
+    _scoreB = 0;
+    _finished = false;
   }
 
   bool _isPair(UnoCard a, UnoCard b) =>
       a.color == b.color && a.number == b.number;
 
   void _onTap(int index) {
-    if (_busy || _won) return;
+    if (_busy || _finished) return;
     final tile = _tiles[index];
     if (tile.flipped || tile.matched) return;
     GameHaptics.tap();
@@ -111,12 +119,16 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
       return;
     }
     final first = _tiles[_firstIndex!];
-    setState(() => _moves++);
     if (_isPair(first.card, tile.card)) {
       setState(() {
         first.matched = true;
         tile.matched = true;
         _firstIndex = null;
+        if (_turnA) {
+          _scoreA++;
+        } else {
+          _scoreB++;
+        }
       });
       GameHaptics.light();
       GameSounds.play(Sfx.match);
@@ -126,19 +138,20 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
       final firstIndex = _firstIndex!;
       _firstIndex = null;
       GameSounds.play(Sfx.buzz);
-      Timer(const Duration(milliseconds: 750), () {
+      Timer(const Duration(milliseconds: 850), () {
         if (!mounted) return;
         setState(() {
           _tiles[firstIndex].flipped = false;
           _tiles[index].flipped = false;
           _busy = false;
+          _turnA = !_turnA;
         });
       });
     }
   }
 
   void _handleWin() {
-    setState(() => _won = true);
+    setState(() => _finished = true);
     GameHaptics.success();
     GameSounds.play(Sfx.win);
     // A small reward keeps mini-games tied into progression.
@@ -174,11 +187,20 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(Insets.m),
+              padding: const EdgeInsets.fromLTRB(
+                Insets.m,
+                Insets.m,
+                Insets.m,
+                Insets.xs,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _Stat(label: S.moves, value: '$_moves'),
+                  _PlayerScore(
+                    label: S.player1,
+                    pairs: _scoreA,
+                    active: _turnA && !_finished,
+                  ),
                   SegmentedButton<_Difficulty>(
                     segments: [
                       for (final d in _Difficulty.values)
@@ -191,9 +213,25 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
                       _deal();
                     }),
                   ),
+                  _PlayerScore(
+                    label: S.player2,
+                    pairs: _scoreB,
+                    active: !_turnA && !_finished,
+                  ),
                 ],
               ),
             ),
+            if (!_finished)
+              Padding(
+                padding: const EdgeInsets.only(bottom: Insets.xs),
+                child: Text(
+                  S.memoryTurnOf(_turnA ? S.player1 : S.player2),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
             Expanded(
               child: Stack(
                 children: [
@@ -213,15 +251,60 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
                       ),
                     ),
                   ),
-                  if (_won)
+                  if (_finished)
                     Positioned.fill(
-                      child: _WinOverlay(moves: _moves, onPlayAgain: _restart),
+                      child: _WinOverlay(
+                        scoreA: _scoreA,
+                        scoreB: _scoreB,
+                        onPlayAgain: _restart,
+                      ),
                     ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PlayerScore extends StatelessWidget {
+  const _PlayerScore({
+    required this.label,
+    required this.pairs,
+    required this.active,
+  });
+  final String label;
+  final int pairs;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: Insets.s, vertical: 6),
+      decoration: BoxDecoration(
+        color: active ? scheme.primaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(Corners.m),
+        border: Border.all(
+          color: active ? scheme.primary : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          Text(
+            S.pairsLabel(pairs),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
@@ -256,51 +339,40 @@ class _MemoryTile extends StatelessWidget {
   }
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: theme.textTheme.labelSmall),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge!.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _WinOverlay extends StatelessWidget {
-  const _WinOverlay({required this.moves, required this.onPlayAgain});
-  final int moves;
+  const _WinOverlay({
+    required this.scoreA,
+    required this.scoreB,
+    required this.onPlayAgain,
+  });
+  final int scoreA;
+  final int scoreB;
   final VoidCallback onPlayAgain;
 
   @override
   Widget build(BuildContext context) {
+    final draw = scoreA == scoreB;
+    final winner = scoreA > scoreB ? S.player1 : S.player2;
     return ColoredBox(
       color: Colors.black.withValues(alpha: 0.55),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🎉', style: TextStyle(fontSize: 56)),
+            Text(draw ? '🤝' : '🎉', style: const TextStyle(fontSize: 56)),
             const SizedBox(height: Insets.m),
             Text(
-              S.memoryWon(moves),
+              draw ? S.memoryDraw : S.memoryWinnerIs(winner),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: Insets.xs),
+            Text(
+              '${S.player1}: ${S.pairsLabel(scoreA)}   ${S.player2}: ${S.pairsLabel(scoreB)}',
+              style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: Insets.l),
             FilledButton.icon(

@@ -9,6 +9,7 @@ import '../../../core/constants/game_palette.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
 import '../../../core/services/online_mode.dart';
+import '../../../core/utils/ui_feedback.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
 import '../../../core/widgets/coin_chip.dart';
 import '../../../core/widgets/rank_badge.dart';
@@ -36,6 +37,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _playWithFriends() =>
       context.push('${Routes.lobby}?mode=${_mode.index}');
+
+  Future<void> _playWithAnyone() async {
+    try {
+      final room = await ref
+          .read(lobbyControllerProvider.notifier)
+          .quickMatch(_mode);
+      if (mounted) unawaited(context.push(Routes.roomPath(room.code)));
+    } catch (error) {
+      if (mounted) context.showError(error);
+    }
+  }
 
   Future<void> _tapMode(GameMode mode, bool locked) async {
     if (!locked) {
@@ -91,6 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               mode: _mode,
               onPlay: _playVsBots,
               onPlayWithFriends: _playWithFriends,
+              onPlayWithAnyone: isOnline ? _playWithAnyone : null,
             ),
             const SizedBox(height: Insets.l),
             Text(S.chooseMode, style: Theme.of(context).textTheme.titleMedium),
@@ -123,7 +136,6 @@ class _OtherGamesGrid extends StatelessWidget {
   static String _routeFor(MiniGame game) => switch (game) {
     MiniGame.memory => Routes.memory,
     MiniGame.snap => Routes.snap,
-    MiniGame.crazy8s => Routes.crazy8s,
   };
 
   @override
@@ -212,10 +224,14 @@ class _PlayHero extends StatelessWidget {
     required this.mode,
     required this.onPlay,
     required this.onPlayWithFriends,
+    this.onPlayWithAnyone,
   });
   final GameMode mode;
   final VoidCallback onPlay;
   final VoidCallback onPlayWithFriends;
+
+  /// Null when offline — quick-match needs a real backend to find someone.
+  final VoidCallback? onPlayWithAnyone;
 
   @override
   Widget build(BuildContext context) {
@@ -273,11 +289,23 @@ class _PlayHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Insets.xs),
-          TextButton.icon(
-            onPressed: onPlayWithFriends,
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-            icon: const Icon(Icons.people_alt_outlined, size: 18),
-            label: Text(S.playWithFriends),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: onPlayWithFriends,
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                icon: const Icon(Icons.people_alt_outlined, size: 18),
+                label: Text(S.playWithFriends),
+              ),
+              if (onPlayWithAnyone != null)
+                TextButton.icon(
+                  onPressed: onPlayWithAnyone,
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                  icon: const Icon(Icons.public_rounded, size: 18),
+                  label: Text(S.playWithAnyone),
+                ),
+            ],
           ),
         ],
       ),

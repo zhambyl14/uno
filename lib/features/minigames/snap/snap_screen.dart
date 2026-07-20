@@ -107,14 +107,18 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       _pile.add(card);
     });
     if (_isMatch(_prev, _top)) {
-      _matchOpen = true;
+      setState(() => _matchOpen = true);
       // Bot reacts after a beatable, randomized delay.
       _botTimer = Timer(
         Duration(milliseconds: 550 + _rng.nextInt(1000)),
         _botSnaps,
       );
     } else {
-      _scheduleFlip(const Duration(milliseconds: 1050));
+      // The pace quickens as the deck thins out — later flips come faster,
+      // so the round builds tension instead of staying flat throughout.
+      final dealt = _pile.length;
+      final delay = (1050 - dealt * 14).clamp(500, 1050);
+      _scheduleFlip(Duration(milliseconds: delay));
     }
   }
 
@@ -213,7 +217,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _PileView(top: _top, count: _pile.length),
+                      _PileView(
+                        top: _top,
+                        count: _pile.length,
+                        matchOpen: _matchOpen,
+                      ),
                       const SizedBox(height: Insets.m),
                       AnimatedOpacity(
                         duration: const Duration(milliseconds: 150),
@@ -272,50 +280,111 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   }
 }
 
-class _PileView extends StatelessWidget {
-  const _PileView({required this.top, required this.count});
+class _PileView extends StatefulWidget {
+  const _PileView({
+    required this.top,
+    required this.count,
+    required this.matchOpen,
+  });
   final UnoCard? top;
   final int count;
+  final bool matchOpen;
+
+  @override
+  State<_PileView> createState() => _PileViewState();
+}
+
+class _PileViewState extends State<_PileView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 340),
+  );
+
+  @override
+  void didUpdateWidget(_PileView old) {
+    super.didUpdateWidget(old);
+    if (widget.matchOpen && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (!widget.matchOpen && _pulse.isAnimating) {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          transitionBuilder: (child, animation) => ScaleTransition(
-            scale: Tween<double>(begin: 1.2, end: 1).animate(animation),
-            child: FadeTransition(opacity: animation, child: child),
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, child) => Container(
+        decoration: widget.matchOpen
+            ? BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.redAccent.withValues(
+                      alpha: 0.25 + _pulse.value * 0.35,
+                    ),
+                    blurRadius: 18 + _pulse.value * 14,
+                    spreadRadius: 2 + _pulse.value * 4,
+                  ),
+                ],
+              )
+            : null,
+        child: child,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            transitionBuilder: (child, animation) => ScaleTransition(
+              scale: Tween<double>(begin: 1.2, end: 1).animate(animation),
+              child: FadeTransition(opacity: animation, child: child),
+            ),
+            child: widget.top == null
+                ? const SizedBox(
+                    key: ValueKey('empty'),
+                    width: 120,
+                    height: 174,
+                  )
+                : UnoCardView(
+                    key: ValueKey(widget.top!.id),
+                    card: widget.top!,
+                    width: 120,
+                  ),
           ),
-          child: top == null
-              ? const SizedBox(key: ValueKey('empty'), width: 120, height: 174)
-              : UnoCardView(key: ValueKey(top!.id), card: top!, width: 120),
-        ),
-        if (count > 0)
-          Positioned(
-            top: -10,
-            right: -10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Insets.s,
-                vertical: 2,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.inverseSurface,
-                borderRadius: BorderRadius.circular(Corners.l),
-              ),
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onInverseSurface,
-                  fontWeight: FontWeight.bold,
+          if (widget.count > 0)
+            Positioned(
+              top: -10,
+              right: -10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Insets.s,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.inverseSurface,
+                  borderRadius: BorderRadius.circular(Corners.l),
+                ),
+                child: Text(
+                  '${widget.count}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onInverseSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
