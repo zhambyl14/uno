@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/game_sounds.dart';
 import '../../../core/services/haptics.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
+import '../../../core/widgets/how_to_play_sheet.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../game/domain/uno_card.dart';
 import '../../game/presentation/widgets/uno_card_view.dart';
@@ -121,10 +123,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     if (_matchOpen) {
       _botTimer?.cancel();
       GameHaptics.medium();
+      GameSounds.play(Sfx.snap);
       _awardPile(toMe: true, message: S.snapYouWon);
     } else {
       // Forgiving for kids: a nudge, a short lock-out, no card loss.
       GameHaptics.success();
+      GameSounds.play(Sfx.buzz);
       _showFlash(S.snapTooSoon);
     }
   }
@@ -169,6 +173,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     setState(() => _finished = true);
     if (_myCards >= _botCards) {
       GameHaptics.success();
+      GameSounds.play(Sfx.win);
       unawaited(ref.read(authControllerProvider.notifier).creditCoins(15));
     }
   }
@@ -180,6 +185,16 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       appBar: AppBar(
         title: Text(S.snapTitle),
         actions: [
+          IconButton(
+            onPressed: () => HowToPlaySheet.show(
+              context,
+              emoji: '👏',
+              title: S.snapTitle,
+              rules: S.snapRules,
+            ),
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: S.howToPlayTitle,
+          ),
           IconButton(
             onPressed: _start,
             icon: const Icon(Icons.refresh_rounded),

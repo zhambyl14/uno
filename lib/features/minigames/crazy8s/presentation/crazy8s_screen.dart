@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/insets.dart';
 import '../../../../core/constants/strings.dart';
+import '../../../../core/services/game_sounds.dart';
 import '../../../../core/services/haptics.dart';
 import '../../../../core/widgets/adaptive_scaffold.dart';
+import '../../../../core/widgets/how_to_play_sheet.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../domain/playing_card.dart';
 
@@ -83,6 +85,7 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
 
   void _apply(PlayingCard card, Suit suit, {required bool fromMe}) {
     GameHaptics.tap();
+    GameSounds.play(card.isWild ? Sfx.special : Sfx.cardPlay);
     setState(() {
       (fromMe ? _myHand : _botHand).remove(card);
       _top = card;
@@ -104,6 +107,7 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
       return;
     }
     GameHaptics.tap();
+    GameSounds.play(Sfx.draw);
     setState(() {
       _myHand.add(_stock.removeLast());
       _passStreak = 0;
@@ -180,6 +184,7 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
     });
     if (iWon) {
       GameHaptics.success();
+      GameSounds.play(Sfx.win);
       unawaited(ref.read(authControllerProvider.notifier).creditCoins(20));
     }
   }
@@ -190,6 +195,16 @@ class _Crazy8sScreenState extends ConsumerState<Crazy8sScreen> {
       appBar: AppBar(
         title: Text(S.crazy8sTitle),
         actions: [
+          IconButton(
+            onPressed: () => HowToPlaySheet.show(
+              context,
+              emoji: '8️⃣',
+              title: S.crazy8sTitle,
+              rules: S.crazy8sRules,
+            ),
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: S.howToPlayTitle,
+          ),
           IconButton(
             onPressed: _deal,
             icon: const Icon(Icons.refresh_rounded),

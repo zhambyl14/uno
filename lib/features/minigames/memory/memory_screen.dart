@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/game_sounds.dart';
 import '../../../core/services/haptics.dart';
 import '../../../core/widgets/adaptive_scaffold.dart';
+import '../../../core/widgets/how_to_play_sheet.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../game/domain/uno_card.dart';
 import '../../game/presentation/widgets/uno_card_view.dart';
@@ -101,6 +103,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
     final tile = _tiles[index];
     if (tile.flipped || tile.matched) return;
     GameHaptics.tap();
+    GameSounds.play(Sfx.tap);
     setState(() => tile.flipped = true);
 
     if (_firstIndex == null) {
@@ -116,11 +119,13 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
         _firstIndex = null;
       });
       GameHaptics.light();
+      GameSounds.play(Sfx.match);
       if (_tiles.every((t) => t.matched)) _handleWin();
     } else {
       _busy = true;
       final firstIndex = _firstIndex!;
       _firstIndex = null;
+      GameSounds.play(Sfx.buzz);
       Timer(const Duration(milliseconds: 750), () {
         if (!mounted) return;
         setState(() {
@@ -135,6 +140,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
   void _handleWin() {
     setState(() => _won = true);
     GameHaptics.success();
+    GameSounds.play(Sfx.win);
     // A small reward keeps mini-games tied into progression.
     unawaited(ref.read(authControllerProvider.notifier).creditCoins(15));
   }
@@ -147,6 +153,16 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
       appBar: AppBar(
         title: Text(S.memoryTitle),
         actions: [
+          IconButton(
+            onPressed: () => HowToPlaySheet.show(
+              context,
+              emoji: '🧠',
+              title: S.memoryTitle,
+              rules: S.memoryRules,
+            ),
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: S.howToPlayTitle,
+          ),
           IconButton(
             onPressed: _restart,
             icon: const Icon(Icons.refresh_rounded),

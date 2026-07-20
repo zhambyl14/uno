@@ -890,4 +890,100 @@ UNO FAMILY is a safe online card game for children and families.
       _v(kk: 'Бот ойлануда…', ru: 'Бот думает…', en: 'Bot is thinking…');
   static String get chooseSuit =>
       _v(kk: 'Масть таңда', ru: 'Выбери масть', en: 'Choose a suit');
+
+  // How-to-play tutorial sheets
+  static String get howToPlayTitle =>
+      _v(kk: 'Қалай ойнау керек?', ru: 'Как играть?', en: 'How to play');
+  static String get gotIt =>
+      _v(kk: 'Түсінікті!', ru: 'Понятно!', en: 'Got it!');
+
+  static List<String> get unoRules => switch (locale) {
+    AppLocale.kk => [
+      '🎯 Кезегіңде қолыңдағы картаны үстелдегі картамен түсі немесе саны/түрі бойынша сәйкестендіріп таста',
+      '🃏 Сәйкес карта жоқ болса — 1 карта ал',
+      '✋ Қолыңда 1 карта қалғанда «UNO!» деп бас — ұмытсаң +2 карта айыппұл аласың',
+      '🚫🔄 Өткізіп жіберу мен бағыт ауыстыру, +2/+4 — қарсыласыңа карта алдырады',
+      '⭐🎁🔀🌈 Star — қосымша жүріс, Gift — сыйлық, Shuffle — араластыру, Rainbow — кез келген түс',
+      '🏆 Бірінші болып қолыңдағы барлық картаны таусқан ойыншы жеңеді!',
+    ],
+    AppLocale.ru => [
+      '🎯 В свой ход клади карту, совпадающую с картой на столе по цвету или числу/типу',
+      '🃏 Нет подходящей карты — возьми 1 карту',
+      '✋ Осталась 1 карта — жми «UNO!», забудешь — штраф +2 карты',
+      '🚫🔄 Пропуск хода и смена направления, +2/+4 — заставляют соперника брать карты',
+      '⭐🎁🔀🌈 Star — доп. ход, Gift — подарок, Shuffle — перемешать, Rainbow — любой цвет',
+      '🏆 Первый, кто избавится от всех карт — побеждает!',
+    ],
+    AppLocale.en => [
+      '🎯 On your turn, play a card matching the table card by color or number/type',
+      "🃏 No matching card? Draw one",
+      '✋ Down to 1 card? Tap "UNO!" — forget and you get a +2 penalty',
+      '🚫🔄 Skip and Reverse, +2/+4 make an opponent draw cards',
+      '⭐🎁🔀🌈 Star = extra turn, Gift = give a card, Shuffle = re-deal hands, Rainbow = any color',
+      '🏆 First to play all their cards wins!',
+    ],
+  };
+
+  static List<String> get memoryRules => switch (locale) {
+    AppLocale.kk => [
+      '🧠 Екі бірдей картаны тауып жұп жаса',
+      '👆 Бір уақытта тек 2 карта ашық тұра алады',
+      '✅ Жұп болса — карталар ашық қалады, болмаса жабылады',
+      '🏆 Барлық жұпты азырақ жүріспен тапсаң — жақсы нәтиже!',
+    ],
+    AppLocale.ru => [
+      '🧠 Находи две одинаковые карты и составляй пары',
+      '👆 Одновременно открыты не более 2 карт',
+      '✅ Пара совпала — карты остаются открытыми, нет — закрываются',
+      '🏆 Чем меньше ходов, тем лучше результат!',
+    ],
+    AppLocale.en => [
+      '🧠 Find two matching cards to make a pair',
+      '👆 Only 2 cards can be face-up at once',
+      "✅ Match? Cards stay open. No match? They flip back",
+      '🏆 Fewer moves means a better score!',
+    ],
+  };
+
+  static List<String> get snapRules => switch (locale) {
+    AppLocale.kk => [
+      '👀 Карталар кезекпен бірінен соң бірі ашылады',
+      '👏 Екі карта түсі не саны бірдей болса — бірінші «ТАП!» бас',
+      '🐢 Ерте бассаң — дестені ала алмайсың, бірақ жазаланбайсың',
+      '🏆 Дестені көп жинаған ойыншы жеңеді',
+    ],
+    AppLocale.ru => [
+      '👀 Карты открываются одна за другой',
+      '👏 Две карты совпали по цвету или числу — жми «ХВАТЬ!» первым',
+      '🐢 Рано нажал — стопку не заберёшь, но штрафа нет',
+      '🏆 Побеждает тот, у кого больше карт',
+    ],
+    AppLocale.en => [
+      '👀 Cards flip one after another',
+      '👏 Two cards match by color or number — tap SNAP first',
+      "🐢 Too early? You just miss the pile — no penalty",
+      '🏆 Whoever collects the most cards wins',
+    ],
+  };
+
+  static List<String> get crazy8sRules => switch (locale) {
+    AppLocale.kk => [
+      '🃏 Кезегіңде үстелдегі картамен түсі не саны бірдей карта таста',
+      '8️⃣ 8 — джокер: кез келген уақытта таста да, жаңа масть таңда',
+      '🎴 Сәйкес карта жоқ болса — карта ал (алған картаңды дереу ойнай аласың)',
+      '🏆 Бірінші болып қолындағы карталарды таусқан жеңеді!',
+    ],
+    AppLocale.ru => [
+      '🃏 В свой ход клади карту, совпадающую по масти или числу',
+      '8️⃣ 8 — джокер: кладётся всегда, после неё выбираешь новую масть',
+      '🎴 Нет подходящей карты — возьми одну (её можно сразу сыграть)',
+      '🏆 Первый, кто избавится от карт — побеждает!',
+    ],
+    AppLocale.en => [
+      '🃏 On your turn, play a card matching suit or rank',
+      '8️⃣ 8s are wild: always playable, then pick the new suit',
+      "🎴 No match? Draw one — you can play it right away",
+      '🏆 First to empty their hand wins!',
+    ],
+  };
 }

@@ -67,11 +67,9 @@ class AuthController extends AsyncNotifier<PlayerProfile?> {
       );
     } catch (_) {
       final prefs = ref.read(prefsServiceProvider);
-      return LocalAuthRepository(prefs).signInGuest(
-        nickname: nickname,
-        avatarId: avatar.id,
-        isChild: false,
-      );
+      return LocalAuthRepository(
+        prefs,
+      ).signInGuest(nickname: nickname, avatarId: avatar.id, isChild: false);
     }
   }
 

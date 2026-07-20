@@ -7,7 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/constants/insets.dart';
 import '../../../core/constants/strings.dart';
+import '../../../core/services/game_sounds.dart';
 import '../../../core/services/haptics.dart';
+import '../../../core/services/prefs_service.dart';
+import '../../../core/widgets/how_to_play_sheet.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../shop/domain/shop_item.dart';
 import '../domain/game_action.dart';
@@ -36,6 +39,27 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   String? _chat;
   Timer? _chatTimer;
   String? _lastEventSig;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowTutorial());
+  }
+
+  /// Shows the UNO rules once per device, the very first time a match opens.
+  void _maybeShowTutorial() {
+    const key = 'seen_tutorial_uno';
+    final prefs = ref.read(prefsServiceProvider);
+    if (prefs.getBool(key) == true) return;
+    unawaited(prefs.setBool(key, true));
+    if (!mounted) return;
+    HowToPlaySheet.show(
+      context,
+      emoji: '🃏',
+      title: S.howToPlayTitle,
+      rules: S.unoRules,
+    );
+  }
 
   @override
   void dispose() {
@@ -70,6 +94,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final id = _localId;
     if (id != null && (event.actorId == id || event.targetId == id)) {
       GameHaptics.forEvent(event.type);
+      GameSounds.forEvent(event.type);
     }
   }
 
@@ -315,6 +340,16 @@ class _TopBar extends StatelessWidget {
             Text(
               '${state.mode.emoji} ${state.mode.label}',
               style: Theme.of(context).textTheme.titleSmall,
+            ),
+            IconButton(
+              tooltip: S.howToPlayTitle,
+              onPressed: () => HowToPlaySheet.show(
+                context,
+                emoji: '🃏',
+                title: S.howToPlayTitle,
+                rules: S.unoRules,
+              ),
+              icon: const Icon(Icons.help_outline_rounded, size: 20),
             ),
             const Spacer(),
             TurnDirectionIndicator(
