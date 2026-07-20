@@ -18,11 +18,17 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
 
   if (AppConfig.isOnline) {
-    await Supabase.initialize(
-      url: AppConfig.supabaseUrl,
-      // Accepts a legacy anon key or a new publishable key.
-      publishableKey: AppConfig.supabaseAnonKey,
-    );
+    try {
+      await Supabase.initialize(
+        url: AppConfig.supabaseUrl,
+        // Legacy anon JWT is the most compatible for web auth + realtime.
+        // ignore: deprecated_member_use
+        anonKey: AppConfig.supabaseAnonKey,
+      );
+    } catch (_) {
+      // Backend unreachable at boot — the auth layer falls back to local mode
+      // so the app still opens and plays against bots.
+    }
   }
 
   final push = AppConfig.pushReady ? FcmPushService() : const NoopPushService();

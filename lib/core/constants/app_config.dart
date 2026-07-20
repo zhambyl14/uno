@@ -18,9 +18,13 @@ abstract final class AppConfig {
     'SUPABASE_URL',
     defaultValue: 'https://qkrwrbeostnosimuqiii.supabase.co',
   );
+  // Legacy anon JWT key (not the sb_publishable_ key): it's the most
+  // battle-tested path for supabase_flutter auth + realtime on web, which the
+  // publishable key can hang on. Safe to ship — RLS still gates everything.
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'sb_publishable_YIYmHuzo1jjmJ1T0vC2PXw_Ppu-lULq',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcndyYmVvc3Rub3NpbXVxaWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzOTIxODcsImV4cCI6MjA5OTk2ODE4N30.OAx0RfiwNfYfoiOxfpj3e-uAXatJJAHjdRXdo7Ne3hs',
   );
 
   /// True when the app is built with a real Supabase project.
